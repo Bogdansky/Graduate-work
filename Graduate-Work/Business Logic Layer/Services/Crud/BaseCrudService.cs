@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Business_Logic_Layer.Services.Crud
 {
-    public abstract class BaseCrudService<T>
+    public abstract class BaseCrudService<T> : IDisposable
         where T: class
     {
         public ILogger _logger;
@@ -23,5 +23,6 @@ namespace Business_Logic_Layer.Services.Crud
         public abstract OperationResult ReadAll();
         public abstract OperationResult Update(int id, T model);
         public abstract OperationResult Delete(int id);
+        public abstract void Dispose();
     }
 }
