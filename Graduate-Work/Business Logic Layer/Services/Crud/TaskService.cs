@@ -17,7 +17,7 @@ namespace Business_Logic_Layer.Services.Crud
         private Context _dbContext;
         private Context _readonlyDbContext;
 
-        public TaskService(ILogger logger, IMapper mapper, ContextFactory contextFactory, TaskProfile taskProfile) : base(logger, mapper)
+        public TaskService(ILogger logger, IMapper mapper, ContextFactory contextFactory) : base(logger, mapper)
         {
             _dbContext = contextFactory.CreateDbContext();
             _readonlyDbContext = contextFactory.CreateReadonlyDbContext();
@@ -27,7 +27,7 @@ namespace Business_Logic_Layer.Services.Crud
         {
             try
             {
-                if (_dbContext.Tasks.All(t => t.ProjectId == model.ProjectId && t.Title != model.Title))
+                if (_dbContext.Tasks.Any(t => t.ProjectId == model.ProjectId && t.Title == model.Title))
                 {
                     var task = _mapper.Map<Task>(model);
                     var newEntity = _dbContext.Tasks.Add(task);
@@ -55,22 +55,116 @@ namespace Business_Logic_Layer.Services.Crud
 
         public override OperationResult Delete(int id)
         {
-            throw new NotImplementedException();
+            var task = _dbContext.Tasks.Find(id);
+            if (task == null)
+            {
+                return new OperationResult
+                {
+                    Error = new Error
+                    {
+                        Title = "Ошибка получения задания",
+                        Description = "Такого задания нет."
+                    }
+                };
+            }
+            using (var transaction = _dbContext.Database.BeginTransaction())
+            {
+                _dbContext.Entry(task).State = Microsoft.EntityFrameworkCore.EntityState.Deleted;
+                _dbContext.SaveChanges();
+                transaction.Rollback();
+            }
+            return new OperationResult();
         }
 
         public override OperationResult Read(int id)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var task = _readonlyDbContext.Tasks.Find(id);
+                if (task == null)
+                {
+                    return new OperationResult
+                    {
+                        Error = new Error
+                        {
+                            Title = "Ошибка получения задания",
+                            Description = "Такого задания нет."
+                        }
+                    };
+                }
+                _logger.LogInformation("Прочтено задания с id={0}", id);
+                return new OperationResult
+                {
+                    Result = _mapper.Map<TaskDTO>(task)
+                };
+            }
+            catch(Exception e)
+            {
+                var errorText = "При чтении задания произошла неожиданная ошибка.";
+                _logger.LogError(e, errorText);
+                return new OperationResult
+                {
+                    Error = new Error
+                    {
+                        Title = "Внутренняя ошибка",
+                        Description = errorText
+                    }
+                };
+            }
         }
 
         public override OperationResult ReadAll()
         {
-            throw new NotImplementedException();
+            return new OperationResult { Result = _readonlyDbContext.Tasks.ToArray() };
         }
 
         public override OperationResult Update(int id, TaskDTO model)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (!_dbContext.Tasks.Any(t => t.Id == id))
+                {
+                    return new OperationResult
+                    {
+                        Error = new Error
+                        {
+                            Title = "Ошибка получения задания",
+                            Description = "Такого задания нет."
+                        }
+                    };
+                }
+                var task = _mapper.Map<Task>(model);
+
+                if (task.Id == default)
+                {
+                    task.Id = id;
+                }
+
+                _dbContext.Tasks.Attach(task);
+                _dbContext.Entry(task).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+                if (_dbContext.SaveChanges() > 0)
+                {
+                    _logger.LogInformation("Задание с id={0} было успешно обновлено", id);
+                }
+
+                return new OperationResult
+                {
+                    Result = model
+                };
+            }
+            catch (Exception e)
+            {
+                var errorText = "При чтении задания произошла неожиданная ошибка.";
+                _logger.LogError(e, errorText);
+                return new OperationResult
+                {
+                    Error = new Error
+                    {
+                        Title = "Внутренняя ошибка",
+                        Description = errorText
+                    }
+                };
+            }
         }
 
         public OperationResult AttachTask(int taskId, int employeeId)
@@ -83,11 +177,11 @@ namespace Business_Logic_Layer.Services.Crud
                 var employeeFIO = _dbContext.Employees.Where(e => e.Id == employeeId).Select(e => e.FIO).FirstOrDefault();
                 if (task == null)
                 {
-                    errors.Add("Такого задания не существует");
+                    errors.Add("Такого задания не существует.");
                 }
                 if (employeeFIO == null)
                 {
-                    errors.Add("Такого пользователя нет");
+                    errors.Add("Такого пользователя нет.");
                 }
                 if (errors.Count == 0)
                 {
@@ -103,11 +197,17 @@ namespace Business_Logic_Layer.Services.Crud
             }
             catch(Exception e)
             {
-                var errorText = "Произошла ошибка при привязке задания";
+                var errorText = "Произошла ошибка при привязке задания.";
                 _logger.LogError(e, errorText);
                 result.Error = new Error { Title = "Внутренняя ошибка", Description = errorText};
                 return result;
             }
+        }
+
+        public override void Dispose()
+        {
+            _dbContext.Dispose();
+            _readonlyDbContext.Dispose();
         }
     }
 }
