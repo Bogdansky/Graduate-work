@@ -1,4 +1,4 @@
-﻿namespace BusinessLogicLayer
+﻿namespace Business_Logic_Layer
 {
     public enum RoleEnum
     {

@@ -7,9 +7,13 @@ namespace Data_Access_Layer
 {
     public class Context : DbContext
     {
-        IConfiguration _config { get; set; }
+        private IConfiguration _config;
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
+        public DbSet<Employee> Employees { get; set; }
+        public DbSet<Task> Tasks { get; set; }
+        public DbSet<Comment> Comments { get; set; }
+        public DbSet<Project> Projects { get; set; }
 
         public Context(IConfiguration config)
         {
