@@ -42,6 +42,7 @@ namespace Graduate_Work
             services.AddTransient<AccountService>();
             services.AddTransient<UserService>();
             services.AddScoped<ContextFactory>();
+            services.AddLogging();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

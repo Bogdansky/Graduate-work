@@ -1,20 +1,26 @@
 ﻿using AutoMapper;
 using Business_Logic_Layer.DTO;
 using Business_Logic_Layer.Services.Crud;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using static Business_Logic_Layer.Helpers.ByteHelper;
 
 namespace Business_Logic_Layer.Services
 {
     public class AccountService
     {
-        private ContextFactory _contextFactory;
         private IMapper mapper;
         private UserService _userService;
-        public AccountService(ContextFactory contextFactory)
+        private IConfiguration _configuration;
+
+        public AccountService(ContextFactory contextFactory, IConfiguration configuration)
         {
-            _contextFactory = contextFactory;
+            _configuration = configuration;
         }
 
         /// <summary>
@@ -35,15 +41,44 @@ namespace Business_Logic_Layer.Services
 
         public UserDTO Register(UserDTO user)
         {
-            var context = _contextFactory.CreateDbContext();
-            if (!context.Users.Any(u => u.Login == user.Login))
-            {
-                var newUser = _userService.CreateUser(user);
-               
-            }
-            return null;
+            var newUser = _userService.CreateUser(user);
+            return newUser;
         }
 
+        public string GenerateToken(UserDTO user)
+        {
+            var identity = GetIdentity(user);
 
+            var now = DateTime.UtcNow;
+            var section = _configuration.GetSection("AuthOptions");
+            // создаем JWT-токен
+            var jwt = new JwtSecurityToken(
+                    issuer: section["Issuer"],
+                    audience: section["Audience"],
+                    notBefore: now,
+                    claims: identity.Claims,
+                    expires: now.Add(TimeSpan.FromMinutes(Convert.ToDouble(section["LifeTime"]))),
+                    signingCredentials: new SigningCredentials(GenerateSecurityKey(user), SecurityAlgorithms.HmacSha256));
+            var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+
+            return encodedJwt;
+        }
+
+        private ClaimsIdentity GetIdentity(UserDTO user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimsIdentity.DefaultNameClaimType, user.Login)
+            };
+            var claimsIdentity =
+            new ClaimsIdentity(claims, "Token", ClaimsIdentity.DefaultNameClaimType,
+                ClaimsIdentity.DefaultRoleClaimType);
+            return claimsIdentity;
+        }
+
+        private SymmetricSecurityKey GenerateSecurityKey(UserDTO user)
+        {
+            return new SymmetricSecurityKey(System.Text.Encoding.ASCII.GetBytes(""));
+        }
     }
 }

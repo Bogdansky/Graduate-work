@@ -17,7 +17,7 @@ namespace Business_Logic_Layer.Services.Crud
         private Context _dbContext;
         private Context _readonlyDbContext;
 
-        public TaskService(ILogger logger, IMapper mapper, ContextFactory contextFactory) : base(logger, mapper)
+        public TaskService(ILogger<TaskService> logger, IMapper mapper, ContextFactory contextFactory) : base(logger, mapper)
         {
             _dbContext = contextFactory.CreateDbContext();
             _readonlyDbContext = contextFactory.CreateReadonlyDbContext();

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Business_Logic_Layer.DTO;
+using Business_Logic_Layer.Models;
 using Business_Logic_Layer.Services;
 using Business_Logic_Layer.Services.Crud;
-using Graduate_Work.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -34,11 +34,11 @@ namespace Graduate_Work.Controllers
             {
                 var user = _userService.Read(id);
                 _logger.LogInformation("User read successfully");
-                return new OperationResult { Entity = user };
+                return new OperationResult { Result = user };
             }
             catch (Exception e)
             {
-                return new OperationResult { ErrorDescription = e.Message };
+                return new OperationResult { Error = new Error { Description = e.Message } };
             }
         }
 

@@ -1,29 +1,32 @@
 ﻿using Data_Access_Layer.Models;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Business_Logic_Layer.Helpers;
 using Business_Logic_Layer.DTO;
 using System.Linq;
+using Business_Logic_Layer.Models;
+using Data_Access_Layer;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
 
 namespace Business_Logic_Layer.Services.Crud
 {
     public class UserService : BaseCrudService<UserDTO>
     {
-        private ContextFactory _contextFactory;
-        public UserService(ContextFactory contextFactory)
+        private Context _dbContext;
+        private Context _readonlyDbContext;
+        public UserService(ILogger<UserService> logger, IMapper mapper, ContextFactory contextFactory) : base(logger, mapper)
         {
-            _contextFactory = contextFactory;
+            _dbContext = contextFactory.CreateDbContext();
+            _readonlyDbContext = contextFactory.CreateReadonlyDbContext();
         }
-        public override UserDTO Create(UserDTO model)
+        public override OperationResult Create(UserDTO model)
         {
             throw new NotImplementedException();
         }
 
         public UserDTO CreateUser(UserDTO user)
         {
-            var context = _contextFactory.CreateDbContext();
-            if (context.Users.Any(u => u.Login == user.Login))
+            if (_dbContext.Users.Any(u => u.Login == user.Login))
             {
                 var saltBytes = new byte[32];
                 new Random().NextBytes(saltBytes);
@@ -33,30 +36,35 @@ namespace Business_Logic_Layer.Services.Crud
                     Salt = Convert.ToBase64String(saltBytes),
                     Password = user.Password == null ? throw new ArgumentNullException(nameof(user.Password)) : ByteHelper.ComputeHash(ByteHelper.Concat(user.Password, saltBytes))
                 };
-                context.Users.Add(newUser);
-                return context.SaveChanges() > 0 ? EntityHelper.SetId(user, newUser.Id) as UserDTO : null;
+                _dbContext.Users.Add(newUser);
+                return _dbContext.SaveChanges() > 0 ? EntityHelper.SetId(user, newUser.Id) as UserDTO : null;
             }
             return null;
         }
 
-        public override UserDTO Delete(int id)
+        public override OperationResult Delete(int id)
         {
             throw new NotImplementedException();
         }
 
-        public override UserDTO Read(int id)
+        public override OperationResult Read(int id)
         {
             throw new NotImplementedException();
         }
 
-        public override ICollection<UserDTO> ReadAll()
+        public override OperationResult ReadAll()
         {
             throw new NotImplementedException();
         }
 
-        public override UserDTO Update(int id, UserDTO model)
+        public override OperationResult Update(int id, UserDTO model)
         {
             throw new NotImplementedException();
+        }
+        public override void Dispose()
+        {
+            _dbContext.Dispose();
+            _readonlyDbContext.Dispose();
         }
     }
 }
