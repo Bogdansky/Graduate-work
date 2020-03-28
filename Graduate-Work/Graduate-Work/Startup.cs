@@ -47,6 +47,7 @@ namespace Graduate_Work
             services.AddTransient<UserService>();
             services.AddScoped<ContextFactory>();
             services.AddLogging();
+            services.AddMemoryCache();
 
             services.AddAuthentication(options =>
             {
@@ -80,12 +81,7 @@ namespace Graduate_Work
             {
                 builder.AddConsole();
             });
-            var logger = loggerFactory.CreateLogger<Startup>();
-            app.Run(async (context) =>
-            {
-                logger.LogInformation("Requested Path: {0}", context.Request.Path);
-                await context.Response.WriteAsync("Hello World!");
-            });
+
             app.UseSwagger();
             app.UseSwaggerUI(c => 
             {

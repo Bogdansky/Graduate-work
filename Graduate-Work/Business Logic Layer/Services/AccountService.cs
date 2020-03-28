@@ -15,13 +15,15 @@ namespace Business_Logic_Layer.Services
 {
     public class AccountService
     {
-        private IMapper mapper;
+        private IMapper _mapper;
         private UserService _userService;
         private IConfiguration _configuration;
         private IMemoryCache _cache;
 
-        public AccountService(ContextFactory contextFactory, IConfiguration configuration, IMemoryCache cache)
+        public AccountService(IMapper mapper, UserService userService, ContextFactory contextFactory, IConfiguration configuration, IMemoryCache cache)
         {
+            _mapper = mapper;
+            _userService = userService;
             _configuration = configuration;
             _cache = cache;
         }

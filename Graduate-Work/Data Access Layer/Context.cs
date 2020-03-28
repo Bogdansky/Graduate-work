@@ -28,5 +28,40 @@ namespace Data_Access_Layer
                 databaseSettings["Server"], databaseSettings["User"], databaseSettings["Password"], databaseSettings["Database"]);
             optionsBuilder.UseMySql(connectionString);
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<TeamMember>()
+                .HasKey(tm => new { tm.EmployeeId, tm.ProjectId, tm.RoleId });
+            modelBuilder.Entity<TeamMember>()
+                .HasOne(tm => tm.Project)
+                .WithMany(p => p.Team)
+                .HasForeignKey(tm => tm.ProjectId);
+            modelBuilder.Entity<TeamMember>()
+                .HasOne(tm => tm.Employee)
+                .WithMany(e => e.Projects)
+                .HasForeignKey(tm => tm.EmployeeId);
+            modelBuilder.Entity<Employee>()
+                .HasOne(e => e.User)
+                .WithOne(u => u.Employee)
+                .HasForeignKey<User>(u => u.EmployeeId)
+                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<Employee>()
+                .HasOne(e => e.Organization)
+                .WithMany(o => o.Employees)
+                .HasForeignKey(e => e.OrganizationId);
+            modelBuilder.Entity<Project>()
+                .HasOne(e => e.Organization)
+                .WithMany(o => o.Projects)
+                .HasForeignKey(e => e.OrganizationId);
+            modelBuilder.Entity<Task>()
+                .HasOne(t => t.Project)
+                .WithMany(p => p.Tasks)
+                .HasForeignKey(t => t.ProjectId);
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Task)
+                .WithMany(t => t.Comments)
+                .HasForeignKey(c => c.TaskId);
+        }
     }
 }
