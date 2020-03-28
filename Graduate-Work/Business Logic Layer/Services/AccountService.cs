@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Business_Logic_Layer.DTO;
 using Business_Logic_Layer.Services.Crud;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -17,10 +18,12 @@ namespace Business_Logic_Layer.Services
         private IMapper mapper;
         private UserService _userService;
         private IConfiguration _configuration;
+        private IMemoryCache _cache;
 
-        public AccountService(ContextFactory contextFactory, IConfiguration configuration)
+        public AccountService(ContextFactory contextFactory, IConfiguration configuration, IMemoryCache cache)
         {
             _configuration = configuration;
+            _cache = cache;
         }
 
         /// <summary>
@@ -78,6 +81,7 @@ namespace Business_Logic_Layer.Services
 
         private SymmetricSecurityKey GenerateSecurityKey(UserDTO user)
         {
+            
             return new SymmetricSecurityKey(System.Text.Encoding.ASCII.GetBytes(""));
         }
     }

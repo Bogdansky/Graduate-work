@@ -14,8 +14,11 @@ using Microsoft.Extensions.Logging;
 using Business_Logic_Layer.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Business_Logic_Layer.Services.Crud;
 using Business_Logic_Layer.Profiles;
+using Microsoft.AspNetCore.Diagnostics;
+using System.IO;
 
 namespace Graduate_Work
 {
@@ -31,6 +34,7 @@ namespace Graduate_Work
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var identitySection = Configuration.GetSection("AuthOptions");
             services.AddSwaggerGen(c => 
             { 
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Task manager", Version = "v1" }); 
@@ -43,16 +47,35 @@ namespace Graduate_Work
             services.AddTransient<UserService>();
             services.AddScoped<ContextFactory>();
             services.AddLogging();
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+
+            }).AddJwtBearer(options =>
+            {
+                options.Authority = identitySection.GetValue<string>("Issuer");
+                options.RequireHttpsMetadata = false;
+                options.Audience = identitySection.GetValue<string>("Audience");
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
+            app.UseExceptionHandler(errorApp =>
             {
-                app.UseDeveloperExceptionPage();
-            }
-            
+                errorApp.Run(async context =>
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/json";
+
+                    await context.Response.WriteAsync("{Error: \"Server was fell down\"}");
+                });
+            });
+            app.UseHsts();
+
             var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddConsole();
@@ -75,6 +98,7 @@ namespace Graduate_Work
             app.UseRouting();
 
             app.UseAuthorization();
+            app.UseAuthentication();
 
             app.UseEndpoints(endpoints =>
             {
