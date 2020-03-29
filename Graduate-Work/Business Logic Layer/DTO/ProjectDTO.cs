@@ -8,8 +8,7 @@ namespace Business_Logic_Layer.DTO
     {
         public string Name { get; set; }
         public string Description { get; set; }
-        public object Team { get; set; }
         public ICollection<TaskDTO> Tasks { get; set; }
-        public ICollection<EmployeeDTO> Administartors { get; set; }
+        public ICollection<EmployeeDTO> Administrators { get; set; }
     }
 }

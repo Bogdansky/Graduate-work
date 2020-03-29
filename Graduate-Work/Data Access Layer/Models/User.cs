@@ -10,6 +10,6 @@ namespace Data_Access_Layer.Models
         public string Password { get; set; }
         public string Salt { get; set; }
         public Employee Employee { get; set; }
-        public int EmployeeId { get; set; }
+        public int? EmployeeId { get; set; }
     }
 }

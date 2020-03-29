@@ -8,8 +8,8 @@ namespace Data_Access_Layer.Models
     {
         public string FIO { get; set; }
         public DateTime Birthday { get; set; }
-        public int UserId { get; set; }
-        public int OrganizationId { get; set; }
+        public int? UserId { get; set; }
+        public int? OrganizationId { get; set; }
         public virtual User User { get; set; }
         public virtual Organization Organization { get; set; }
         public virtual ICollection<TeamMember> Projects { get; set; }

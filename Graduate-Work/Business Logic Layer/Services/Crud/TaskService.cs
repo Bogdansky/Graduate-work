@@ -14,13 +14,9 @@ namespace Business_Logic_Layer.Services.Crud
 {
     public class TaskService : BaseCrudService<TaskDTO>
     {
-        private Context _dbContext;
-        private Context _readonlyDbContext;
-
-        public TaskService(ILogger<TaskService> logger, IMapper mapper, ContextFactory contextFactory) : base(logger, mapper)
+        public TaskService(ILogger<TaskService> logger, IMapper mapper, ContextFactory contextFactory) : base(logger, mapper, contextFactory)
         {
-            _dbContext = contextFactory.CreateDbContext();
-            _readonlyDbContext = contextFactory.CreateReadonlyDbContext();
+            
         }
 
         public override OperationResult Create(TaskDTO model)
