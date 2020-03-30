@@ -27,11 +27,13 @@ namespace Data_Access_Layer
             modelBuilder.Entity<TeamMember>()
                 .HasOne(tm => tm.Project)
                 .WithMany(p => p.Team)
-                .HasForeignKey(tm => tm.ProjectId);
+                .HasForeignKey(tm => tm.ProjectId)
+                .OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<TeamMember>()
                 .HasOne(tm => tm.Employee)
                 .WithMany(e => e.Projects)
-                .HasForeignKey(tm => tm.EmployeeId);
+                .HasForeignKey(tm => tm.EmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Employee)
                 .WithOne(e => e.User)
@@ -41,6 +43,14 @@ namespace Data_Access_Layer
                 .HasOne(e => e.Organization)
                 .WithMany(o => o.Employees)
                 .HasForeignKey(e => e.OrganizationId);
+            modelBuilder.Entity<Organization>()
+                .HasMany(o => o.Projects)
+                .WithOne(p => p.Organization)
+                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<Organization>()
+                .HasMany(o => o.Employees)
+                .WithOne(e => e.Organization)
+                .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<Project>()
                 .HasOne(e => e.Organization)
                 .WithMany(o => o.Projects)
