@@ -22,7 +22,12 @@ namespace Business_Logic_Layer.Helpers
 
             return @enum.ToString();
         }
-
+        /// <summary>
+        /// Cast int value to description of TEnum value
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="value">Int value of enum (more than 255 - dangerous)</param>
+        /// <returns></returns>
         public static string GetDescriptionByValue<T>(this int value)
         {
             var type = typeof(T);

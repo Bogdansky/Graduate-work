@@ -6,7 +6,7 @@ namespace Data_Access_Layer.Models
 {
     public class Employee : BaseModel
     {
-        public string FIO { get; set; }
+        public string FullName { get; set; }
         public DateTime Birthday { get; set; }
         public int? UserId { get; set; }
         public int? OrganizationId { get; set; }

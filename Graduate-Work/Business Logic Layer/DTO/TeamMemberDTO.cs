@@ -6,8 +6,10 @@ namespace Business_Logic_Layer.DTO
 {
     public class TeamMemberDTO : BaseModelDTO
     {
+        public EmployeeDTO Employee { get; set; }
+        public ProjectDTO Project { get; set; }
         public int? EmployeeId { get; set; }
         public int? ProjectId { get; set; }
-        public string Role { get; set; }
+        public RoleEnum Role { get; set; }
     }
 }

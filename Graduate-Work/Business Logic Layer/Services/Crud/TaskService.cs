@@ -170,7 +170,7 @@ namespace Business_Logic_Layer.Services.Crud
             {
                 var errors = new List<string>();
                 var task = _dbContext.Tasks.Find(taskId);
-                var employeeFIO = _dbContext.Employees.Where(e => e.Id == employeeId).Select(e => e.FIO).FirstOrDefault();
+                var employeeFIO = _dbContext.Employees.Where(e => e.Id == employeeId).Select(e => e.FullName).FirstOrDefault();
                 if (task == null)
                 {
                     errors.Add("Такого задания не существует.");
