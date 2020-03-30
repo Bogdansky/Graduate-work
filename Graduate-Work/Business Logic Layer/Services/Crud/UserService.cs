@@ -12,9 +12,7 @@ namespace Business_Logic_Layer.Services.Crud
 {
     public class UserService : BaseCrudService<UserDTO>
     {
-        private Context _dbContext;
-        private Context _readonlyDbContext;
-        public UserService(ILogger<UserService> logger, IMapper mapper, ContextFactory contextFactory) : base(logger, mapper)
+        public UserService(ILogger<UserService> logger, IMapper mapper, ContextFactory contextFactory) : base(logger, mapper, contextFactory)
         {
             _dbContext = contextFactory.CreateDbContext();
             _readonlyDbContext = contextFactory.CreateReadonlyDbContext();
@@ -63,8 +61,7 @@ namespace Business_Logic_Layer.Services.Crud
         }
         public override void Dispose()
         {
-            _dbContext.Dispose();
-            _readonlyDbContext.Dispose();
+            base.Dispose();
         }
     }
 }

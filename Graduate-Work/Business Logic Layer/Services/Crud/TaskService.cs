@@ -39,9 +39,9 @@ namespace Business_Logic_Layer.Services.Crud
                 }
                 return new OperationResult { Error = new Error { Title = "Ошибка задания", Description = "Задание с таким заголовком уже существует" } };
             }
-            catch
+            catch(Exception e)
             {
-                _logger.LogError("Произошла ошибка при создании задания \"{0}\"", model.Title ?? "Unknown");
+                _logger.LogError(e, "Произошла ошибка при создании задания \"{0}\"", model.Title ?? "Unknown");
                 return new OperationResult
                 {
                     Error = new Error { Description = "Произошла неожиданная ошибка при создании задания" }
@@ -198,12 +198,6 @@ namespace Business_Logic_Layer.Services.Crud
                 result.Error = new Error { Title = "Внутренняя ошибка", Description = errorText};
                 return result;
             }
-        }
-
-        public override void Dispose()
-        {
-            _dbContext.Dispose();
-            _readonlyDbContext.Dispose();
         }
     }
 }
