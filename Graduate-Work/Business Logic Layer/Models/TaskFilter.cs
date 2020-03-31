@@ -6,7 +6,6 @@ namespace Business_Logic_Layer.Models
 {
     public class TaskFilter
     {
-        public int TaskId { get; set; }
         public TaskFilterTypes TaskFilterType { get; set; }
         public int? EmployeeId { get; set; } 
         public int? ProjectId { get; set; }
@@ -14,6 +13,6 @@ namespace Business_Logic_Layer.Models
 
     public enum TaskFilterTypes
     {
-        All, AllMine, MineInProject
+        AllMine, AllInProject, MineInProject
     }
 }

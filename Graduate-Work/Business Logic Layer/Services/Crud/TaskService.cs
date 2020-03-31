@@ -35,7 +35,7 @@ namespace Business_Logic_Layer.Services.Crud
                     {
                         _logger.LogInformation("Задание \"{0}\" успешно сохранено", model.Title);
                     }
-                    return new OperationResult { Result = new { id = newEntity.Entity.Id } };
+                    return new OperationResult { Result = new { id = newEntity.Entity } };
                 }
                 return new OperationResult { Error = new Error { Title = "Ошибка задания", Description = "Задание с таким заголовком уже существует" } };
             }
@@ -51,9 +51,28 @@ namespace Business_Logic_Layer.Services.Crud
 
         public override OperationResult Delete(int id)
         {
-            var task = _dbContext.Tasks.Find(id);
-            if (task == null)
+            try
             {
+                var task = _dbContext.Tasks.Find(id);
+                if (task == null)
+                {
+                    return new OperationResult
+                    {
+                        Error = new Error
+                        {
+                            Title = "Ошибка получения задания",
+                            Description = "Такого задания нет."
+                        }
+                    };
+                }
+                using var transaction = _dbContext.Database.BeginTransaction();
+                _dbContext.Entry(task).State = Microsoft.EntityFrameworkCore.EntityState.Deleted;
+                return new OperationResult { Result = new { Success = _dbContext.SaveChanges() > 0 } };
+            }
+            catch (Exception e)
+            {
+                var originMessage = "Неожиданная ошибка при удалении задания";
+                _logger.LogError(e, "{0} c id = {1}", originMessage, id);
                 return new OperationResult
                 {
                     Error = new Error
@@ -63,13 +82,6 @@ namespace Business_Logic_Layer.Services.Crud
                     }
                 };
             }
-            using (var transaction = _dbContext.Database.BeginTransaction())
-            {
-                _dbContext.Entry(task).State = Microsoft.EntityFrameworkCore.EntityState.Deleted;
-                _dbContext.SaveChanges();
-                transaction.Rollback();
-            }
-            return new OperationResult();
         }
 
         public override OperationResult Read(int id)
@@ -88,7 +100,7 @@ namespace Business_Logic_Layer.Services.Crud
                         }
                     };
                 }
-                _logger.LogInformation("Прочтено задания с id={0}", id);
+                _logger.LogInformation("Прочтено задание с id={0}", id);
                 return new OperationResult
                 {
                     Result = _mapper.Map<TaskDTO>(task)
@@ -112,6 +124,28 @@ namespace Business_Logic_Layer.Services.Crud
         public override OperationResult ReadAll()
         {
             return new OperationResult { Result = _readonlyDbContext.Tasks.ToArray() };
+        }
+
+        public OperationResult ReadAll(TaskFilter filter)
+        {
+            OperationResult result = new OperationResult();
+            try
+            {
+                var data = filter.TaskFilterType switch
+                {
+                    TaskFilterTypes.AllMine => _readonlyDbContext.Tasks.Where(t => t.EmployeeId == filter.EmployeeId),
+                    TaskFilterTypes.AllInProject => _readonlyDbContext.Tasks.Where(t => t.ProjectId == t.ProjectId),
+                    TaskFilterTypes.MineInProject => _readonlyDbContext.Tasks.Where(t => t.EmployeeId == filter.EmployeeId && t.ProjectId == filter.ProjectId),
+                    _ => null
+                };
+                result.Result = data;
+                return result;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Ошибка при чтении заданий");
+                return new OperationResult { Error = new Error { Description = "Неожиданная ошибка при получении заданий" } };
+            }
         }
 
         public override OperationResult Update(int id, TaskDTO model)
