@@ -38,5 +38,15 @@ namespace Business_Logic_Layer.Helpers
             var enumValue = (T)Enum.ToObject(type, value) as Enum;
             return enumValue.GetDescription();   
         }
+
+        public static T GetMemberByValue<T>(this int value)
+        {
+            var type = typeof(T);
+            if (!type.IsEnum || !type.IsEnumDefined(value))
+            {
+                return default;
+            }
+            return (T)Enum.ToObject(type, value);
+        }
     }
 }
