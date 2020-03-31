@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using Business_Logic_Layer.Helpers;
 
 namespace Business_Logic_Layer.Services.Crud
 {
@@ -16,6 +16,40 @@ namespace Business_Logic_Layer.Services.Crud
         {
 
         }
+
+        public OperationResult Create(int employeeId, ProjectDTO model)
+        {
+            var employee = _readonlyDbContext.Employees.Find(employeeId);
+            if (employee == null)
+            {
+                return new OperationResult { Error = new Error { Title = "Ошибка при создании проекта", Description = "Создатель не найден!" } };
+            }
+            var employeeDTO = _mapper.Map<EmployeeDTO>(employee);
+            if (employeeDTO.Role != RoleEnum.ProjectManager)
+            {
+                return new OperationResult { Error = new Error { Title = "Ошибка при создании проекта", Description = "Пользователь не является проектным менеджером" } };
+            }
+            if (model.Administrators == null)
+            {
+                model.Administrators = new List<EmployeeDTO> { employeeDTO };
+            }
+            else
+            {
+                model.Administrators.Add(employeeDTO);
+            }
+            var teamMember = new TeamMemberDTO { EmployeeId = employeeId, Employee = employeeDTO };
+            if (model.Team == null)
+            {
+                model.Team = new List<TeamMemberDTO> { teamMember };
+            }
+            else
+            {
+                model.Team.Add(teamMember);
+            }
+
+            return Create(model);
+        }
+
         public override OperationResult Create(ProjectDTO model)
         {
             OperationResult result = new OperationResult();
@@ -143,7 +177,7 @@ namespace Business_Logic_Layer.Services.Crud
 
         public override OperationResult Update(int id, ProjectDTO model)
         {
-            OperationResult result = null;
+            OperationResult result = new OperationResult();
             try
             {
                 var exists = _dbContext.Projects.Any(p => p.Id == id);
@@ -166,6 +200,24 @@ namespace Business_Logic_Layer.Services.Crud
                 result.Error = new Error { Description = originMessage };
             }
             return result;
+        }
+        /// <summary>
+        /// Добавляет пользователя в проект
+        /// </summary>
+        /// <param name="employeeId">Добавляющий пользователя</param>
+        /// <param name="model">Добавляемый пользователь</param>
+        /// <returns></returns>
+        public OperationResult AddEmployee(int employeeId, TeamMemberDTO model)
+        {
+            var teamMember = _dbContext.TeamMembers.Where(tm => tm.EmployeeId == model.EmployeeId && tm.ProjectId == model.ProjectId).FirstOrDefault();
+            if (teamMember != null)
+            {
+                return new OperationResult { Error = new Error { Title = "Ошибка при добавлении сотрудника в проект", Description = "Добавляющий пользователь не является членом проекта, в который хочет добавить сотрудника" } };
+            }
+            if (teamMember.Role.Id != (int)RoleEnum.ProjectManager)
+            {
+                return new OperationResult { Error = new Error { Title = "Ошибка при добавлении сотрудника в проект", Description = "Добавляющий пользователь не является проектным менеджером" } };
+            }
         }
     }
 }

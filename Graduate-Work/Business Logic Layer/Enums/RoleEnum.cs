@@ -13,7 +13,7 @@
         GUIDesigner = 8,
         DataScientist = 9,
         QAAutomationEngineer = 10,
-        ProductManager = 11,
+        ProjectManager = 11,
         DataEngineer = 12,
         DataAnalyst = 13
     }

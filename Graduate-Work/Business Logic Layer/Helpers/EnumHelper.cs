@@ -48,5 +48,17 @@ namespace Business_Logic_Layer.Helpers
             }
             return (T)Enum.ToObject(type, value);
         }
+
+        public static List<KeyValuePair<int, string>> GetEnumValues<T>()
+        {
+            var type = typeof(T);
+            if (!type.IsEnum)
+            {
+                return null;
+            }
+            var list = Enum.GetValues(type).Cast<Enum>();
+            var values = list.Select(e => new KeyValuePair<int, string>((int)Enum.Parse(type, e.ToString()), e.GetDescription())).ToList();
+            return values;
+        }
     }
 }
