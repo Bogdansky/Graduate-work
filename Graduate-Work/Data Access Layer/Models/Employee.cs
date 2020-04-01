@@ -14,5 +14,6 @@ namespace Data_Access_Layer.Models
         public virtual User User { get; set; }
         public virtual Organization Organization { get; set; }
         public virtual ICollection<TeamMember> Projects { get; set; }
+        public virtual ICollection<Task> Tasks { get; set; }
     }
 }
