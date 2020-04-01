@@ -59,7 +59,38 @@ namespace Business_Logic_Layer.Services.Crud
 
         public override OperationResult Delete(int id)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var organization = _dbContext.Organizations.Find(id);
+                if (organization == null)
+                {
+                    return new OperationResult
+                    {
+                        Error = new Error
+                        {
+                            Title = "Ошибка получения задания",
+                            Description = "Такого задания нет."
+                        }
+                    };
+                }
+                using var transaction = _dbContext.Database.BeginTransaction();
+                _dbContext.Entry(organization).State = Microsoft.EntityFrameworkCore.EntityState.Deleted;
+                var success = _dbContext.SaveChanges() > 0;
+                transaction.Commit();
+                return new OperationResult { Result = new { success } };
+            }
+            catch (Exception e)
+            {
+                var originMessage = "Неожиданная ошибка при удалении организации";
+                _logger.LogError(e, "{0} c id = {1}", originMessage, id);
+                return new OperationResult
+                {
+                    Error = new Error
+                    {
+                        Description = originMessage
+                    }
+                };
+            }
         }
 
         public override OperationResult Read(int id)
@@ -101,7 +132,7 @@ namespace Business_Logic_Layer.Services.Crud
 
         public override OperationResult ReadAll()
         {
-            return new OperationResult { Result = _readonlyDbContext.Organizations.Select(o => o.Name)};
+            return new OperationResult { Result = _readonlyDbContext.Organizations.Select(o => new { o.Name, o.Id })};
         }
 
         public override OperationResult Update(int id, OrganizationDTO model)
@@ -112,7 +143,7 @@ namespace Business_Logic_Layer.Services.Crud
                 var exists = _dbContext.Organizations.Any(p => p.Id == id);
                 if (!exists)
                 {
-                    result.Error = new Error { Title = "Ошибка при обновлении", Description = "Такой организаци не существует!" };
+                    result.Error = new Error { Title = "Ошибка при обновлении", Description = "Такой организации не существует!" };
                 }
                 else
                 {
@@ -125,7 +156,7 @@ namespace Business_Logic_Layer.Services.Crud
             catch (Exception e)
             {
                 var originMessage = "Неожиданная ошибка при обновлении организации";
-                _logger.LogError(e, "{0} \"{1}\" c id = {2}", originMessage, model.Name, id);
+                _logger.LogError(e, "{0} \"{1}\"-новое имя c id = {2}", originMessage, model.Name, id);
                 result.Error = new Error { Description = originMessage };
             }
             return result;
