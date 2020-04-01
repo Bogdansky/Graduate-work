@@ -8,20 +8,12 @@ using System.Text;
 
 namespace Business_Logic_Layer.Services.Crud
 {
-    public abstract class BaseCrudService<T> : IDisposable
+    public abstract class BaseCrudService<T> : BaseService
         where T: class
     {
-        public ILogger _logger;
-        public IMapper _mapper;
-        public Context _dbContext;
-        public Context _readonlyDbContext;
 
-        public BaseCrudService(ILogger logger, IMapper mapper, ContextFactory contextFactory)
+        public BaseCrudService(ILogger logger, IMapper mapper, ContextFactory contextFactory) : base(logger, mapper, contextFactory)
         {
-            _logger = logger;
-            _mapper = mapper;
-            _dbContext = contextFactory.CreateDbContext();
-            _readonlyDbContext = contextFactory.CreateReadonlyDbContext();
         }
 
         public abstract OperationResult Create(T model);
