@@ -33,19 +33,16 @@ namespace Data_Access_Layer
                 .HasOne(tm => tm.Employee)
                 .WithMany(e => e.Projects)
                 .HasForeignKey(tm => tm.EmployeeId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Employee)
                 .WithOne(e => e.User)
                 .HasForeignKey<User>(u => u.EmployeeId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<Employee>()
                 .HasOne(e => e.Organization)
                 .WithMany(o => o.Employees)
-                .HasForeignKey(e => e.OrganizationId);
-            modelBuilder.Entity<Organization>()
-                .HasMany(o => o.Projects)
-                .WithOne(p => p.Organization)
+                .HasForeignKey(e => e.OrganizationId)
                 .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<Organization>()
                 .HasMany(o => o.Employees)
@@ -54,15 +51,22 @@ namespace Data_Access_Layer
             modelBuilder.Entity<Project>()
                 .HasOne(e => e.Organization)
                 .WithMany(o => o.Projects)
-                .HasForeignKey(e => e.OrganizationId);
+                .HasForeignKey(e => e.OrganizationId)
+                .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<Task>()
                 .HasOne(t => t.Project)
                 .WithMany(p => p.Tasks)
                 .HasForeignKey(t => t.ProjectId);
+            modelBuilder.Entity<Employee>()
+                .HasMany(e => e.Tasks)
+                .WithOne(t => t.Employee)
+                .HasForeignKey(t => t.EmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.Task)
                 .WithMany(t => t.Comments)
-                .HasForeignKey(c => c.TaskId);
+                .HasForeignKey(c => c.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
