@@ -19,25 +19,34 @@ namespace Business_Logic_Layer.Services.Crud
         }
         public override OperationResult Create(UserDTO model)
         {
-            throw new NotImplementedException();
+            var user = CreateUser(model);
+            return user == null ?
+                new OperationResult { Error = new Error { Title = "Ошибка при создании пользователя", Description = $"Логин \"{model.Login}\" недоступен" } } : new OperationResult { Result = user };
         }
 
         public UserDTO CreateUser(UserDTO user)
         {
-            if (_dbContext.Users.Any(u => u.Login == user.Login))
+            try
             {
-                var saltBytes = new byte[32];
-                new Random().NextBytes(saltBytes);
-                var newUser = new User
+                if (_dbContext.Users.Any(u => u.Login == user.Login))
                 {
-                    Login = user.Login ?? throw new ArgumentNullException(nameof(user.Login)),
-                    Salt = Convert.ToBase64String(saltBytes),
-                    Password = user.Password == null ? throw new ArgumentNullException(nameof(user.Password)) : ByteHelper.ComputeHash(ByteHelper.Concat(user.Password, saltBytes))
-                };
-                _dbContext.Users.Add(newUser);
-                return _dbContext.SaveChanges() > 0 ? EntityHelper.SetId(user, newUser.Id) as UserDTO : null;
+                    var saltBytes = new byte[32];
+                    new Random().NextBytes(saltBytes);
+                    var newUser = new User
+                    {
+                        Login = user.Login ?? throw new ArgumentNullException(nameof(user.Login)),
+                        Salt = Convert.ToBase64String(saltBytes),
+                        Password = user.Password == null ? throw new ArgumentNullException(nameof(user.Password)) : ByteHelper.ComputeHash(ByteHelper.Concat(user.Password, saltBytes))
+                    };
+                    _dbContext.Users.Add(newUser);
+                    return _dbContext.SaveChanges() > 0 ? EntityHelper.SetId(user, newUser.Id) as UserDTO : null;
+                }
+                return null;
             }
-            return null;
+            catch
+            {
+                return null;
+            }
         }
 
         public override OperationResult Delete(int id)
@@ -58,10 +67,6 @@ namespace Business_Logic_Layer.Services.Crud
         public override OperationResult Update(int id, UserDTO model)
         {
             throw new NotImplementedException();
-        }
-        public override void Dispose()
-        {
-            base.Dispose();
         }
     }
 }
