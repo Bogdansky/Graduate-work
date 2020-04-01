@@ -76,6 +76,7 @@ namespace Business_Logic_Layer.Services.Crud
                 else
                 {
                     _logger.LogWarning("Не удалось сохранить проект \"{0}\"", model.Name);
+                    return new OperationResult { Result = new { Success = false } };
                 }
                 result.Result = _mapper.Map<ProjectDTO>(entity.Entity);
             }
@@ -109,6 +110,7 @@ namespace Business_Logic_Layer.Services.Crud
                 else
                 {
                     _logger.LogWarning("Не удалось удалить проект \"{0}\"", project.Name);
+                    return new OperationResult { Result = new { Success = false } };
                 }
                 transaction.Commit();
                 result.Result = new { Success = true };
@@ -209,14 +211,34 @@ namespace Business_Logic_Layer.Services.Crud
         /// <returns></returns>
         public OperationResult AddEmployee(int employeeId, TeamMemberDTO model)
         {
-            var teamMember = _dbContext.TeamMembers.Where(tm => tm.EmployeeId == model.EmployeeId && tm.ProjectId == model.ProjectId).FirstOrDefault();
-            if (teamMember != null)
+            try
             {
-                return new OperationResult { Error = new Error { Title = "Ошибка при добавлении сотрудника в проект", Description = "Добавляющий пользователь не является членом проекта, в который хочет добавить сотрудника" } };
+                var teamMember = _dbContext.TeamMembers.Where(tm => tm.EmployeeId == model.EmployeeId && tm.ProjectId == model.ProjectId).FirstOrDefault();
+                if (teamMember != null)
+                {
+                    return new OperationResult { Error = new Error { Title = "Ошибка при добавлении сотрудника в проект", Description = "Вы не являетсь членом команды проекта, в который хотите добавить сотрудника!" } };
+                }
+                if (teamMember.Role.Id != (int)RoleEnum.ProjectManager)
+                {
+                    return new OperationResult { Error = new Error { Title = "Ошибка при добавлении сотрудника в проект", Description = "Вы не являетесь проектным менеджером!" } };
+                }
+                var newTeamMember = _mapper.Map<TeamMember>(model);
+                var entity = _dbContext.TeamMembers.Add(newTeamMember);
+                if (_dbContext.SaveChanges() > 0)
+                {
+                    _logger.LogInformation("Сотрудник(id=) успешно добавлен в проект(id=)", model.EmployeeId, model.ProjectId);
+                }
+                else
+                {
+                    _logger.LogWarning("Не удалось добавить добавить в проект(id=)", model.EmployeeId, model.ProjectId);
+                    return new OperationResult { Result = new { Success = false } };
+                }
+                return new OperationResult { Result = _mapper.Map<TeamMemberDTO>(entity.Entity) };
             }
-            if (teamMember.Role.Id != (int)RoleEnum.ProjectManager)
+            catch(Exception e)
             {
-                return new OperationResult { Error = new Error { Title = "Ошибка при добавлении сотрудника в проект", Description = "Добавляющий пользователь не является проектным менеджером" } };
+                _logger.LogError(e, "Неожиданная ошибка при добавлении на проект(id={0}) сотрудника(id={1})", model.ProjectId, model.EmployeeId);
+                return new OperationResult { Error = new Error { Description = "Неожиданная ошибка при добавлении на проект сотрудника" } };
             }
         }
     }

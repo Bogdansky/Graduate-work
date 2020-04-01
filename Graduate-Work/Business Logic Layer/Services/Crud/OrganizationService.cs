@@ -42,6 +42,7 @@ namespace Business_Logic_Layer.Services.Crud
                 else
                 {
                     _logger.LogInformation("Организация \"{0}\" успешно сохранено", model.Name);
+                    return new OperationResult { Result = new { Success = false } };
                 }
                 return result;
             }

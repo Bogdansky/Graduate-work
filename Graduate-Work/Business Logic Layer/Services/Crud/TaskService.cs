@@ -34,6 +34,7 @@ namespace Business_Logic_Layer.Services.Crud
                     else
                     {
                         _logger.LogInformation("Задание \"{0}\" успешно сохранено", model.Title);
+                        return new OperationResult { Result = new { Success = false } };
                     }
                     return new OperationResult { Result = new { id = newEntity.Entity } };
                 }
