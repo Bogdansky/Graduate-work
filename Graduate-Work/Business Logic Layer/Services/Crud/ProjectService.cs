@@ -110,10 +110,11 @@ namespace Business_Logic_Layer.Services.Crud
                 else
                 {
                     _logger.LogWarning("Не удалось удалить проект \"{0}\"", project.Name);
-                    return new OperationResult { Result = new { Success = false } };
+                    transaction.Rollback();
+                    return new OperationResult { Result = new { success = false } };
                 }
                 transaction.Commit();
-                result.Result = new { Success = true };
+                result.Result = new { success = true };
             }
             catch (Exception e)
             {

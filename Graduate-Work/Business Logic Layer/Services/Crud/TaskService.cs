@@ -78,8 +78,8 @@ namespace Business_Logic_Layer.Services.Crud
                 {
                     Error = new Error
                     {
-                        Title = "Ошибка получения задания",
-                        Description = "Такого задания нет."
+                        Title = "Ошибка удаления задания",
+                        Description = "Произошла неожиданная ошибка"
                     }
                 };
             }
