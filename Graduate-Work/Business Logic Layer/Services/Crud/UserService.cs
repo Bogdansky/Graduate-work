@@ -29,7 +29,8 @@ namespace Business_Logic_Layer.Services.Crud
         {
             try
             {
-                if (_dbContext.Users.Any(u => u.Login == user.Login))
+                var exists = _dbContext.Users.Where(u => u.Login == user.Login).Count() > 0;
+                if (!exists)
                 {
                     var saltBytes = new byte[32];
                     new Random().NextBytes(saltBytes);
@@ -44,8 +45,9 @@ namespace Business_Logic_Layer.Services.Crud
                 }
                 return null;
             }
-            catch
+            catch(Exception e)
             {
+                _logger.LogError(e, "Неожиданная ошибка при создании пользователя");
                 return null;
             }
         }
