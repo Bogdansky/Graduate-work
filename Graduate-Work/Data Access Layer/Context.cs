@@ -26,12 +26,12 @@ namespace Data_Access_Layer
                 .HasKey(tm => new { tm.EmployeeId, tm.ProjectId, tm.RoleId });
             modelBuilder.Entity<TeamMember>()
                 .HasOne(tm => tm.Project)
-                .WithMany(p => p.Team)
+                .WithMany(p => p.TeamMembers)
                 .HasForeignKey(tm => tm.ProjectId)
                 .OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<TeamMember>()
                 .HasOne(tm => tm.Employee)
-                .WithMany(e => e.Projects)
+                .WithMany(e => e.TeamMembers)
                 .HasForeignKey(tm => tm.EmployeeId)
                 .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<User>()

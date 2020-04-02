@@ -21,10 +21,5 @@ namespace Business_Logic_Layer.Services.Crud
         public abstract OperationResult ReadAll();
         public abstract OperationResult Update(int id, T model);
         public abstract OperationResult Delete(int id);
-        public async virtual void Dispose()
-        {
-            await _dbContext.DisposeAsync();
-            await _readonlyDbContext.DisposeAsync();
-        }
     }
 }

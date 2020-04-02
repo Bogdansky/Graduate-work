@@ -166,7 +166,7 @@ namespace Business_Logic_Layer.Services.Crud
                 }
                 if (filter.Filter == ProjectFilterEnum.Mine)
                 {
-                    query = query.Where(p => p.Team.Any(t => t.EmployeeId == filter.EmployeeId));
+                    query = query.Where(p => p.TeamMembers.Any(t => t.EmployeeId == filter.EmployeeId));
                 }
                 var projects = query.ToList();
                 return new OperationResult { Result = _mapper.Map<ICollection<ProjectDTO>>(projects) };

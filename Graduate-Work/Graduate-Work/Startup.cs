@@ -31,6 +31,8 @@ namespace Graduate_Work
 
         public IConfiguration Configuration { get; }
 
+        readonly string MyAllow = "AllowOrigin";
+
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
@@ -60,6 +62,11 @@ namespace Graduate_Work
                 options.RequireHttpsMetadata = false;
                 options.Audience = identitySection.GetValue<string>("Audience");
             });
+
+            services.AddCors(c => c.AddPolicy(MyAllow, builder =>
+            {
+                builder.WithOrigins(identitySection.GetValue<string>("Audience")).AllowAnyMethod().AllowAnyHeader();
+            }));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -92,6 +99,7 @@ namespace Graduate_Work
             app.UseHttpsRedirection();
 
             app.UseRouting();
+            app.UseCors(MyAllow);
 
             app.UseAuthorization();
             app.UseAuthentication();

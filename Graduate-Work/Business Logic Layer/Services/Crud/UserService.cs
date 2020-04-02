@@ -7,6 +7,7 @@ using Business_Logic_Layer.Models;
 using Data_Access_Layer;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 
 namespace Business_Logic_Layer.Services.Crud
 {
@@ -51,22 +52,114 @@ namespace Business_Logic_Layer.Services.Crud
 
         public override OperationResult Delete(int id)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var user = _dbContext.Users.Find(id);
+                if (user == null)
+                {
+                    return new OperationResult
+                    {
+                        Error = new Error
+                        {
+                            Title = "Ошибка получения пользователя",
+                            Description = "Такого пользователя нет."
+                        }
+                    };
+                }
+                using var transaction = _dbContext.Database.BeginTransaction();
+                _dbContext.Entry(user).State = Microsoft.EntityFrameworkCore.EntityState.Deleted;
+                var success = _dbContext.SaveChanges() > 0;
+                transaction.Commit();
+                return new OperationResult { Result = new { success } };
+            }
+            catch (Exception e)
+            {
+                var originMessage = "Неожиданная ошибка при удалении пользователя";
+                _logger.LogError(e, "{0} c id = {1}", originMessage, id);
+                return new OperationResult
+                {
+                    Error = new Error
+                    {
+                        Description = originMessage
+                    }
+                };
+            }
         }
 
         public override OperationResult Read(int id)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var user = _readonlyDbContext.Users.Find(id);
+                if (user == null)
+                {
+                    return new OperationResult
+                    {
+                        Error = new Error
+                        {
+                            Title = "Ошибка получения сотрудника",
+                            Description = "Такого сотрудника нет."
+                        }
+                    };
+                }
+                _logger.LogInformation("Получен пользователь с id={0}", id);
+                return new OperationResult
+                {
+                    Result = _mapper.Map<UserDTO>(user)
+                };
+            }
+            catch (Exception e)
+            {
+                var errorText = "При получении пользователя произошла неожиданная ошибка.";
+                _logger.LogError(e, errorText);
+                return new OperationResult
+                {
+                    Error = new Error
+                    {
+                        Title = "Внутренняя ошибка",
+                        Description = errorText
+                    }
+                };
+            }
         }
 
         public override OperationResult ReadAll()
         {
-            throw new NotImplementedException();
+            var users = _readonlyDbContext.Users.ToList();
+            return new OperationResult { Result = _mapper.Map<List<UserDTO>>(users) };
+        }
+
+        public OperationResult ReadAll(int organizationId)
+        {
+            var users = _readonlyDbContext.Employees.Where(e => e.OrganizationId == organizationId).Select(e => e.User).ToList();
+            return new OperationResult { Result = _mapper.Map<List<UserDTO>>(users) };
         }
 
         public override OperationResult Update(int id, UserDTO model)
         {
-            throw new NotImplementedException();
+            OperationResult result = new OperationResult();
+            try
+            {
+                var exists = _dbContext.Users.Any(u => u.Id == id);
+                if (!exists)
+                {
+                    result.Error = new Error { Title = "Ошибка при обновлении", Description = "Такого пользователя не существует!" };
+                }
+                else
+                {
+                    var user = _mapper.Map<User>(model);
+                    using var transaction = _dbContext.Database.BeginTransaction();
+                    var entity = _dbContext.Users.Update(user);
+                    result.Result = _mapper.Map<UserDTO>(entity.Entity);
+                }
+            }
+            catch (Exception e)
+            {
+                var originMessage = "Неожиданная ошибка при обновлении пользователя";
+                _logger.LogError(e, "{0} c id = {1}", originMessage, id);
+                result.Error = new Error { Description = originMessage };
+            }
+            return result;
         }
     }
 }

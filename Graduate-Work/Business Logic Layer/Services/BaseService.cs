@@ -21,10 +21,10 @@ namespace Business_Logic_Layer.Services
             _dbContext = contextFactory.CreateDbContext();
             _readonlyDbContext = contextFactory.CreateReadonlyDbContext();
         }
-        public async virtual void Dispose()
+        public virtual void Dispose()
         {
-            await _dbContext.DisposeAsync();
-            await _readonlyDbContext.DisposeAsync();
+            _dbContext.Dispose();
+            _readonlyDbContext.Dispose();
         }
     }
 }

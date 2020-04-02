@@ -32,7 +32,7 @@ namespace Business_Logic_Layer.Services
             var connectionString = string.Format("server={0};UserId={1};Password={2};database={3};",
                 databaseSettings["Server"], databaseSettings["User"], databaseSettings["Password"], databaseSettings["Database"]);
             var optionsBuilder = new DbContextOptionsBuilder<Context>();
-            optionsBuilder.UseMySql(connectionString);
+            optionsBuilder.UseMySQL(connectionString);
             return optionsBuilder;
         }
 
