@@ -1,5 +1,5 @@
-﻿using Data_Access_Layer.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Data_Access_Layer.Models;
 using Microsoft.Extensions.Configuration;
 using System;
 

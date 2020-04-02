@@ -84,7 +84,7 @@ namespace Business_Logic_Layer.Services
         private SymmetricSecurityKey GenerateSecurityKey(UserDTO user)
         {
             
-            return new SymmetricSecurityKey(System.Text.Encoding.ASCII.GetBytes(""));
+            return new SymmetricSecurityKey(System.Text.Encoding.ASCII.GetBytes("SymmetricSecurityKey"));
         }
     }
 }
