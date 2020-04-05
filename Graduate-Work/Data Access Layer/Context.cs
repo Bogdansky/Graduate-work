@@ -13,7 +13,6 @@ namespace Data_Access_Layer
         public DbSet<Task> Tasks { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Project> Projects { get; set; }
-        public DbSet<Organization> Organizations { get; set; }
         public DbSet<TeamMember> TeamMembers { get; set; }
         public DbSet<TaskType> TaskTypes { get; set; }
 
@@ -22,6 +21,8 @@ namespace Data_Access_Layer
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Role>().Property(r => r.Id).ValueGeneratedNever();
+            modelBuilder.Entity<TaskType>().Property(t => t.Id).ValueGeneratedNever();
             modelBuilder.Entity<TeamMember>()
                 .HasKey(tm => new { tm.EmployeeId, tm.ProjectId, tm.RoleId });
             modelBuilder.Entity<TeamMember>()
