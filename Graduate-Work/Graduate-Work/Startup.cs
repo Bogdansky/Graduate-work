@@ -45,18 +45,17 @@ namespace Graduate_Work
             services.AddControllers();
             services.AddAutoMapper(typeof(TaskProfile));
 
-            services.AddTransient<AccountService>();
-            services.AddTransient<UserService>();
-            services.AddScoped<ContextFactory>();
             services.AddLogging();
+            services.AddScoped<AccountService>();
+            services.AddScoped<UserService>();
+            services.AddScoped<OrganizationService>();
+            services.AddScoped<ProjectService>();
+            services.AddScoped<TaskService>();
+            services.AddScoped<EmployeeService>();
+            services.AddScoped<ContextFactory>();
             services.AddMemoryCache();
 
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-
-            }).AddJwtBearer(options =>
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
                 options.Authority = identitySection.GetValue<string>("Issuer");
                 options.RequireHttpsMetadata = false;

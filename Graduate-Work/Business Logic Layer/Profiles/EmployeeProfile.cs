@@ -19,7 +19,8 @@ namespace Business_Logic_Layer.Profiles
                 .ForMember(ed => ed.Role, cfg => cfg.MapFrom(e => e.Role.Id.GetMemberByValue<RoleEnum>()));
             CreateMap<EmployeeDTO, Employee>()
                 .ForMember(e => e.FullName, cfg => cfg.MapFrom(ed => string.Join(' ', ed.FirstName, ed.SecondName, ed.Patronymic)))
-                .ForMember(e => e.Role, cfg => cfg.MapFrom(ed => new Role { Id = (int)ed.Role, Name = ed.Role.GetDescription()}));
+                .ForMember(e => e.Role, cfg => cfg.Ignore());
+                //.ForMember(e => e.Role, cfg => cfg.MapFrom(ed => ed.RoleId == 0 ? new Role { Id = (int)ed.Role, Name = ed.Role.GetDescription()} : new Role { Id = ed.RoleId, Name = ed.RoleId.GetDescriptionByValue<RoleEnum>()}));
         }
     }
 }

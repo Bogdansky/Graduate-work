@@ -3,6 +3,7 @@ using Business_Logic_Layer.DTO;
 using Business_Logic_Layer.Services.Crud;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
@@ -13,14 +14,13 @@ using static Business_Logic_Layer.Helpers.ByteHelper;
 
 namespace Business_Logic_Layer.Services
 {
-    public class AccountService
+    public class AccountService : BaseService
     {
-        private IMapper _mapper;
         private UserService _userService;
         private IConfiguration _configuration;
         private IMemoryCache _cache;
 
-        public AccountService(IMapper mapper, UserService userService, ContextFactory contextFactory, IConfiguration configuration, IMemoryCache cache)
+        public AccountService(IMapper mapper, ILogger<AccountService> logger, UserService userService, ContextFactory contextFactory, IConfiguration configuration, IMemoryCache cache) : base(logger, mapper, contextFactory)
         {
             _mapper = mapper;
             _userService = userService;
@@ -48,6 +48,12 @@ namespace Business_Logic_Layer.Services
         {
             var newUser = _userService.CreateUser(user);
             return newUser;
+        }
+
+        public UserDTO GetUser(string login, string password)
+        {
+            var user = _readonlyDbContext.Users.Where(u => u.Login == login && Verify(password, u.Password, u.Salt)).FirstOrDefault();
+            return user == null ? null : _mapper.Map<UserDTO>(user);
         }
 
         public string GenerateToken(UserDTO user)
@@ -83,8 +89,7 @@ namespace Business_Logic_Layer.Services
 
         private SymmetricSecurityKey GenerateSecurityKey(UserDTO user)
         {
-            
-            return new SymmetricSecurityKey(System.Text.Encoding.ASCII.GetBytes("SymmetricSecurityKey"));
+            return new SymmetricSecurityKey(System.Text.Encoding.ASCII.GetBytes(user.Password));
         }
     }
 }

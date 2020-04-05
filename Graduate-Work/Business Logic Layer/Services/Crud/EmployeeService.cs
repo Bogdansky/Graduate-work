@@ -12,7 +12,7 @@ namespace Business_Logic_Layer.Services.Crud
 {
     public class EmployeeService : BaseCrudService<EmployeeDTO>
     {
-        public EmployeeService(ILogger logger, IMapper mapper, ContextFactory contextFactory) : base(logger, mapper, contextFactory)
+        public EmployeeService(ILogger<EmployeeService> logger, IMapper mapper, ContextFactory contextFactory) : base(logger, mapper, contextFactory)
         {
 
         }
@@ -42,7 +42,7 @@ namespace Business_Logic_Layer.Services.Crud
                 else
                 {
                     _logger.LogInformation("Сотрудник успешно оформлен");
-                    return new OperationResult { Result = new { Success = false } };
+                    return new OperationResult { Result = new { Success = true } };
                 }
                 return result;
             }
@@ -196,6 +196,12 @@ namespace Business_Logic_Layer.Services.Crud
                 result.Error = new Error { Description = originMessage };
             }
             return result;
+        }
+
+        public OperationResult GetRoles()
+        {
+            var roles = _readonlyDbContext.Roles.Select(r => r.Name);
+            return new OperationResult { Result = roles };
         }
     }
 }

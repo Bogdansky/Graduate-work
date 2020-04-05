@@ -12,7 +12,7 @@ namespace Business_Logic_Layer.Services.Crud
 {
     public class ProjectService : BaseCrudService<ProjectDTO>
     {
-        public ProjectService(IMapper mapper, ILogger logger, ContextFactory contextFactory) : base(logger, mapper, contextFactory)
+        public ProjectService(IMapper mapper, ILogger<ProjectService> logger, ContextFactory contextFactory) : base(logger, mapper, contextFactory)
         {
 
         }
@@ -25,7 +25,7 @@ namespace Business_Logic_Layer.Services.Crud
                 return new OperationResult { Error = new Error { Title = "Ошибка при создании проекта", Description = "Создатель не найден!" } };
             }
             var employeeDTO = _mapper.Map<EmployeeDTO>(employee);
-            if (employeeDTO.Role != RoleEnum.ProjectManager)
+            if (employeeDTO.RoleId != (int)RoleEnum.ProjectManager)
             {
                 return new OperationResult { Error = new Error { Title = "Ошибка при создании проекта", Description = "Пользователь не является проектным менеджером" } };
             }
@@ -37,7 +37,7 @@ namespace Business_Logic_Layer.Services.Crud
             {
                 model.Administrators.Add(employeeDTO);
             }
-            var teamMember = new TeamMemberDTO { EmployeeId = employeeId, Employee = employeeDTO };
+            var teamMember = new TeamMemberDTO { EmployeeId = employeeId, Employee = employeeDTO, Role = employee.RoleId.GetMemberByValue<RoleEnum>() };
             if (model.Team == null)
             {
                 model.Team = new List<TeamMemberDTO> { teamMember };
@@ -61,7 +61,7 @@ namespace Business_Logic_Layer.Services.Crud
                     result.Error = new Error { Title = "Ошибка проекта", Description = "Такой проект уже есть!" };
                     return result;
                 }
-                var existsByName = _readonlyDbContext.Projects.Where(p => p.Name == model.Name && p.OrganizationId == model.OrganizationId).Any();
+                var existsByName = _readonlyDbContext.Projects.Where(p => p.Name == model.Name && p.OrganizationId == model.OrganizationId).Count() > 0;
                 if (existsByName)
                 {
                     result.Error = new Error { Title = "Ошибка проекта", Description = "Проект с таким именем уже есть" };
@@ -214,10 +214,15 @@ namespace Business_Logic_Layer.Services.Crud
         {
             try
             {
-                var teamMember = _dbContext.TeamMembers.Where(tm => tm.EmployeeId == model.EmployeeId && tm.ProjectId == model.ProjectId).FirstOrDefault();
-                if (teamMember != null)
+                var teamContainsEmployee = _dbContext.TeamMembers.Where(tm => tm.EmployeeId == model.EmployeeId && tm.ProjectId == model.ProjectId).Count() > 0;
+                if (teamContainsEmployee)
                 {
-                    return new OperationResult { Error = new Error { Title = "Ошибка при добавлении сотрудника в проект", Description = "Вы не являетсь членом команды проекта, в который хотите добавить сотрудника!" } };
+                    return new OperationResult { Error = new Error { Title = "Ошибка при добавлении сотрудника в проект", Description = "Сотрудник уже является членом команды проекта, в которую вы хотите его добавить!" } };
+                }
+                var teamMember = _dbContext.TeamMembers.Where(tm => tm.EmployeeId == employeeId && tm.ProjectId == model.ProjectId).FirstOrDefault();
+                if (teamMember == null)
+                {
+                    return new OperationResult { Error = new Error { Title = "Ошибка при добавлении сотрудника в проект", Description = "Вы не являетсь членом команды проекта, в которую вы хотите добавить сотрудника!" } };
                 }
                 if (teamMember.Role.Id != (int)RoleEnum.ProjectManager)
                 {

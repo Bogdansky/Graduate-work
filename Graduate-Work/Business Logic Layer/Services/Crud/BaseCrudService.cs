@@ -12,7 +12,7 @@ namespace Business_Logic_Layer.Services.Crud
         where T: class
     {
 
-        public BaseCrudService(ILogger logger, IMapper mapper, ContextFactory contextFactory) : base(logger, mapper, contextFactory)
+        public BaseCrudService(ILogger<BaseCrudService<T>> logger, IMapper mapper, ContextFactory contextFactory) : base(logger, mapper, contextFactory)
         {
         }
 

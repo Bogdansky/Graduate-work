@@ -11,7 +11,8 @@ namespace Business_Logic_Layer.Profiles
     {
         public ProjectProfile()
         {
-            CreateMap<Project, ProjectDTO>();
+            CreateMap<Project, ProjectDTO>().ForMember(pd => pd.Team, cfg => cfg.MapFrom(p => p.TeamMembers));
+            CreateMap<ProjectDTO, Project>().ForMember(p => p.TeamMembers, cfg => cfg.MapFrom(pd => pd.Team));
         }
     }
 }

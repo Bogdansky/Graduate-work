@@ -7,11 +7,11 @@ using System.Text;
 
 namespace Business_Logic_Layer.Profiles
 {
-    public class UserProfile : Profile
+    public class OrganizationProfile : Profile
     {
-        public UserProfile()
+        public OrganizationProfile()
         {
-            CreateMap<User, UserDTO>().ReverseMap();
+            CreateMap<Organization, OrganizationDTO>().ReverseMap();
         }
     }
 }
