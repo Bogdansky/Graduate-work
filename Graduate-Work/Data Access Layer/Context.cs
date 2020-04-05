@@ -39,20 +39,6 @@ namespace Data_Access_Layer
                 .WithOne(e => e.User)
                 .HasForeignKey<User>(u => u.EmployeeId)
                 .OnDelete(DeleteBehavior.Restrict);
-            modelBuilder.Entity<Employee>()
-                .HasOne(e => e.Organization)
-                .WithMany(o => o.Employees)
-                .HasForeignKey(e => e.OrganizationId)
-                .OnDelete(DeleteBehavior.Cascade);
-            modelBuilder.Entity<Organization>()
-                .HasMany(o => o.Employees)
-                .WithOne(e => e.Organization)
-                .OnDelete(DeleteBehavior.Cascade);
-            modelBuilder.Entity<Project>()
-                .HasOne(e => e.Organization)
-                .WithMany(o => o.Projects)
-                .HasForeignKey(e => e.OrganizationId)
-                .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<Task>()
                 .HasOne(t => t.Project)
                 .WithMany(p => p.Tasks)

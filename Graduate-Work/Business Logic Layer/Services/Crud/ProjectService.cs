@@ -61,7 +61,7 @@ namespace Business_Logic_Layer.Services.Crud
                     result.Error = new Error { Title = "Ошибка проекта", Description = "Такой проект уже есть!" };
                     return result;
                 }
-                var existsByName = _readonlyDbContext.Projects.Where(p => p.Name == model.Name && p.OrganizationId == model.OrganizationId).Count() > 0;
+                var existsByName = _readonlyDbContext.Projects.Where(p => p.Name == model.Name).Count() > 0;
                 if (existsByName)
                 {
                     result.Error = new Error { Title = "Ошибка проекта", Description = "Проект с таким именем уже есть" };
@@ -159,10 +159,10 @@ namespace Business_Logic_Layer.Services.Crud
         {
             try
             {
-                var query = _readonlyDbContext.Projects.Where(p => p.OrganizationId == filter.OrganizationId);
+                IQueryable<Project> query = null;
                 if (filter.Like != default)
                 {
-                    query = query.Where(p => p.Name.Contains(filter.Like));
+                    query = query == null ? _readonlyDbContext.Projects : query.Where(p => p.Name.Contains(filter.Like));
                 }
                 if (filter.Filter == ProjectFilterEnum.Mine)
                 {
@@ -173,7 +173,7 @@ namespace Business_Logic_Layer.Services.Crud
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Ошибка при чтении проектов организации id={} для сотрудника id={0}", filter.OrganizationId, filter.EmployeeId);
+                _logger.LogError(e, "Ошибка при чтении проектов для сотрудника id={0}", filter.EmployeeId);
                 return new OperationResult { Error = new Error { Description = "Неожиданная ошибка при получении всех проектов сотрудника" } };
             }
         }

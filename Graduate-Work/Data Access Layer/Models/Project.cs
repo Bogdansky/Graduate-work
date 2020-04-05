@@ -8,8 +8,6 @@ namespace Data_Access_Layer.Models
     {
         public string Name { get; set; }
         public string Description { get; set; }
-        public Organization Organization { get; set; }
-        public int? OrganizationId { get; set; }
         public ICollection<TeamMember> TeamMembers { get; set; }
         public ICollection<Task> Tasks { get; set; }
         public ICollection<Employee> Administrators { get; set; }

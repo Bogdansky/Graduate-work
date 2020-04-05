@@ -43,13 +43,6 @@ namespace Graduate_Work.Controllers
             return id.HasValue ? (IActionResult)Ok(_organizationService.Update(id.Value, model)) : BadRequest();
         }
 
-        [HttpPut("user/{id}")]
-        public IActionResult AddEmployee(int? id)
-        {
-            var res = _organizationService.AddEmployee(id.Value);
-            return Ok(res);
-        }
-
         [HttpDelete("{id}")]
         public IActionResult Delete(int? id)
         {

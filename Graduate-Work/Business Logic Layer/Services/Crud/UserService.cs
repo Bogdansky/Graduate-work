@@ -130,9 +130,9 @@ namespace Business_Logic_Layer.Services.Crud
             return new OperationResult { Result = _mapper.Map<List<UserDTO>>(users) };
         }
 
-        public OperationResult ReadAll(int organizationId)
+        public OperationResult ReadAll(int projectId)
         {
-            var users = _readonlyDbContext.Employees.Where(e => e.OrganizationId == organizationId).Select(e => e.User).ToList();
+            var users = _readonlyDbContext.TeamMembers.Where(t => t.ProjectId == projectId).Select(t => t.Employee.User).ToList();
             return new OperationResult { Result = _mapper.Map<List<UserDTO>>(users) };
         }
 

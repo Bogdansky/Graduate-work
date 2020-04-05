@@ -26,11 +26,6 @@ namespace Business_Logic_Layer.Services.Crud
             _emailService = emailService;
         }
 
-        public OperationResult Create(int userId, OrganizationDTO model)
-        {
-            var user = _readonlyDbContext.Users.Find(userId);
-        }
-
         public override OperationResult Create(OrganizationDTO model)
         {
             OperationResult result = new OperationResult();
@@ -177,64 +172,64 @@ namespace Business_Logic_Layer.Services.Crud
             return result;
         }
 
-        public async OperationResult InviteUser(int organizationId, int userId)
-        {
-            try
-            {
-                var exists = _dbContext.Employees.Where(e => e.UserId == userId).Select(e => new { e.OrganizationId, e.UserId}).FirstOrDefault();
+        //public async OperationResult InviteUser(int organizationId, int userId)
+        //{
+        //    try
+        //    {
+        //        var exists = _dbContext.Employees.Where(e => e.UserId == userId).Select(e => new { e.OrganizationId, e.UserId}).FirstOrDefault();
 
-                if (exists != null)
-                {
-                    return new OperationResult { Error = new Error { Title = "Ошибка при приглашении пользователя", Description = exists.OrganizationId == organizationId ? "Пользователь уже состоит в данной организации" : "Пользователь уже состоит в одной из организаций" } };
-                }
-                var name = _dbContext.Organizations.Where(o => o.Id == organizationId).Select(o => new { o.Id, o.Name }).FirstOrDefault();
-                if (name == null)
-                {
-                    return new OperationResult { Error = new Error { Title = "Ошибка при приглашении пользователя", Description = "Такой организации нет" } };
-                }
-                await _emailService.SendEmailAsync(GetHtml(userId, name.Name));
-                return new OperationResult { Result = new { Success = true } };
-            }
-            catch(Exception e)
-            {
-                var errorText = "При приглашении сотрудника произошла неожиданная ошибка.";
-                _logger.LogError(e, errorText);
-                return new OperationResult
-                {
-                    Error = new Error
-                    {
-                        Title = "Внутренняя ошибка",
-                        Description = errorText
-                    }
-                }; 
-            }
-        }
+        //        if (exists != null)
+        //        {
+        //            return new OperationResult { Error = new Error { Title = "Ошибка при приглашении пользователя", Description = exists.OrganizationId == organizationId ? "Пользователь уже состоит в данной организации" : "Пользователь уже состоит в одной из организаций" } };
+        //        }
+        //        var name = _dbContext.Organizations.Where(o => o.Id == organizationId).Select(o => new { o.Id, o.Name }).FirstOrDefault();
+        //        if (name == null)
+        //        {
+        //            return new OperationResult { Error = new Error { Title = "Ошибка при приглашении пользователя", Description = "Такой организации нет" } };
+        //        }
+        //        await _emailService.SendEmailAsync(GetHtml(userId, name.Name));
+        //        return new OperationResult { Result = new { Success = true } };
+        //    }
+        //    catch(Exception e)
+        //    {
+        //        var errorText = "При приглашении сотрудника произошла неожиданная ошибка.";
+        //        _logger.LogError(e, errorText);
+        //        return new OperationResult
+        //        {
+        //            Error = new Error
+        //            {
+        //                Title = "Внутренняя ошибка",
+        //                Description = errorText
+        //            }
+        //        }; 
+        //    }
+        //}
 
-        public OperationResult AddEmployee(int userId)
-        {
-            try
-            {
-                var exists = _dbContext.Users.Where(u => u.Id == userId).Count() > 0;
-                if (exists)
-                {
-                    return new OperationResult { Error = { Title = "Ошибка регистрации сотрудника", Description = "Такого пользователя нет" } };
-                }
-                _cache.TryGetValue(string.Format(EmployeeKey, userId), out EmployeeDTO employee);
-            }
-            catch(Exception e)
-            {
-                var errorText = "При добавлении сотрудника произошла неожиданная ошибка.";
-                _logger.LogError(e, errorText);
-                return new OperationResult
-                {
-                    Error = new Error
-                    {
-                        Title = "Внутренняя ошибка",
-                        Description = errorText
-                    }
-                };
-            }
-        }
+        //public OperationResult AddEmployee(int userId)
+        //{
+        //    try
+        //    {
+        //        var exists = _dbContext.Users.Where(u => u.Id == userId).Count() > 0;
+        //        if (exists)
+        //        {
+        //            return new OperationResult { Error = { Title = "Ошибка регистрации сотрудника", Description = "Такого пользователя нет" } };
+        //        }
+        //        _cache.TryGetValue(string.Format(EmployeeKey, userId), out EmployeeDTO employee);
+        //    }
+        //    catch(Exception e)
+        //    {
+        //        var errorText = "При добавлении сотрудника произошла неожиданная ошибка.";
+        //        _logger.LogError(e, errorText);
+        //        return new OperationResult
+        //        {
+        //            Error = new Error
+        //            {
+        //                Title = "Внутренняя ошибка",
+        //                Description = errorText
+        //            }
+        //        };
+        //    }
+        //}
 
         public string GetHtml(int userId, string organizationName)
         {

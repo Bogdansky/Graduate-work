@@ -17,17 +17,6 @@ namespace Business_Logic_Layer.Services.Crud
 
         }
 
-        // добавить пользователя в проект
-        public OperationResult AcceptInvite(EmployeeDTO model)
-        {
-            var projectExists = _readonlyDbContext.Projects.Any(p => p.Id == model.OrganizationId);
-            if (!projectExists)
-            {
-                return new OperationResult { Error = new Error { Description = "Извините, данной организации уже не существует!" } };
-            }
-            return Create(model);
-        }
-
         public override OperationResult Create(EmployeeDTO model)
         {
             var result = new OperationResult();
@@ -134,11 +123,11 @@ namespace Business_Logic_Layer.Services.Crud
         {
             throw new NotImplementedException();
         }
-        public OperationResult ReadAll(int organizationId)
+        public OperationResult ReadAll(int projectId)
         {
             try
             {
-                var employees = _readonlyDbContext.Employees.Where(e => e.OrganizationId == organizationId).Select(e => new { e.Id, e.FullName, e.Birthday }).ToArray();
+                var employees = _readonlyDbContext.TeamMembers.Where(t => t.ProjectId == projectId).Select(t => new { t.Employee.Id, t.Employee.FullName, t.Employee.Birthday }).ToArray();
                 if (employees == null || employees.Count() == 0)
                 {
                     return new OperationResult
@@ -146,11 +135,11 @@ namespace Business_Logic_Layer.Services.Crud
                         Error = new Error
                         {
                             Title = "Ошибка получения сотрудников",
-                            Description = "В данной организации нет сотрудников!"
+                            Description = "На данном проекте никого нет!"
                         }
                     };
                 }
-                _logger.LogInformation("Получены сотрудники организации с id={0}", organizationId);
+                _logger.LogInformation("Получены участники проекта с id={0}", projectId);
                 return new OperationResult
                 {
                     Result = employees
@@ -158,8 +147,8 @@ namespace Business_Logic_Layer.Services.Crud
             }
             catch (Exception e)
             {
-                var errorText = "При получении сотрудников организации произошла неожиданная ошибка.";
-                _logger.LogError(e, errorText + " (id организации = {0})", organizationId);
+                var errorText = "При получении сотрудников проекта произошла неожиданная ошибка.";
+                _logger.LogError(e, errorText + " (id проекта = {0})", projectId);
                 return new OperationResult
                 {
                     Error = new Error
