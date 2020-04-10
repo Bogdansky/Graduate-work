@@ -12,9 +12,12 @@ namespace Data_Access_Layer.Models
         public string Severity { get; set; }
         public long Effort { get; set; }
         public long Recent { get; set; }
+        public DateTime UpdateDate { get; set; }
         public int TaskTypeId { get; set; }
         public int? EmployeeId { get; set; }
         public int ProjectId { get; set; }
+        public int TaskStatusId { get; set; }
+        public TaskStatus TaskStatus { get; set; }
         public TaskType TaskType { get; set; }
         public Employee Employee { get; set; }
         public Project Project { get; set; }

@@ -19,6 +19,7 @@ using Business_Logic_Layer.Services.Crud;
 using Business_Logic_Layer.Profiles;
 using Microsoft.AspNetCore.Diagnostics;
 using System.IO;
+using Graduate_Work.Hubs;
 
 namespace Graduate_Work
 {
@@ -43,18 +44,20 @@ namespace Graduate_Work
             });
 
             services.AddControllers();
+            services.AddSignalR();
             services.AddAutoMapper(typeof(TaskProfile));
 
-            services.AddLogging();
             services.AddScoped<AccountService>();
             services.AddScoped<UserService>();
-            services.AddScoped<OrganizationService>();
             services.AddScoped<ProjectService>();
             services.AddScoped<TaskService>();
             services.AddScoped<EmployeeService>();
             services.AddScoped<ContextFactory>();
+            services.AddSingleton<EmailService>();
+            services.AddSingleton<ServiceCache>();
             services.AddMemoryCache();
-
+            services.AddLogging();
+            
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
                 options.Authority = identitySection.GetValue<string>("Issuer");
@@ -106,6 +109,7 @@ namespace Graduate_Work
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<ChatHub>("/chat");
             });
         }
     }

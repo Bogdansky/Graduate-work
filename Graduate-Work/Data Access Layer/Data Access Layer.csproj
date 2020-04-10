@@ -6,22 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Migrations\20200402190246_InitialCreate.cs" />
-    <Compile Remove="Migrations\20200402190246_InitialCreate.Designer.cs" />
-    <Compile Remove="Migrations\20200402191043_InitialCreate2.cs" />
-    <Compile Remove="Migrations\20200402191043_InitialCreate2.Designer.cs" />
-    <Compile Remove="Migrations\20200402192751_InitialCreate3.cs" />
-    <Compile Remove="Migrations\20200402192751_InitialCreate3.Designer.cs" />
-    <Compile Remove="Migrations\20200402192832_InitialCreate.cs" />
-    <Compile Remove="Migrations\20200402192832_InitialCreate.Designer.cs" />
-    <Compile Remove="Migrations\20200402193328_InitialCreate.cs" />
-    <Compile Remove="Migrations\20200402193328_InitialCreate.Designer.cs" />
-    <Compile Remove="Migrations\20200402194606_InitialCreate.cs" />
-    <Compile Remove="Migrations\20200402194606_InitialCreate.Designer.cs" />
-    <Compile Remove="Migrations\20200402195105_InitialCreate.cs" />
-    <Compile Remove="Migrations\20200402195105_InitialCreate.Designer.cs" />
-    <Compile Remove="Migrations\20200403190101_AddTaskTypes.cs" />
-    <Compile Remove="Migrations\20200403190101_AddTaskTypes.Designer.cs" />
+    <Compile Remove="Migrations\20200405134222_AddRT.cs" />
+    <Compile Remove="Migrations\20200405134222_AddRT.Designer.cs" />
+    <Compile Remove="Migrations\20200410162904_AddTaskStatus.cs" />
+    <Compile Remove="Migrations\20200410162904_AddTaskStatus.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -10,6 +10,5 @@ namespace Data_Access_Layer.Models
         public string Description { get; set; }
         public ICollection<TeamMember> TeamMembers { get; set; }
         public ICollection<Task> Tasks { get; set; }
-        public ICollection<Employee> Administrators { get; set; }
     }
 }

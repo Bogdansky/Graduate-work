@@ -15,6 +15,7 @@ namespace Data_Access_Layer
         public DbSet<Project> Projects { get; set; }
         public DbSet<TeamMember> TeamMembers { get; set; }
         public DbSet<TaskType> TaskTypes { get; set; }
+        public DbSet<TaskStatus> TaskStatuses { get; set; }
 
         public Context(DbContextOptionsBuilder builder) : base(builder.Options) { }
         public Context(DbContextOptions options) : base(options) { }
@@ -23,12 +24,27 @@ namespace Data_Access_Layer
         {
             modelBuilder.Entity<Role>().Property(r => r.Id).ValueGeneratedNever();
             modelBuilder.Entity<TaskType>().Property(t => t.Id).ValueGeneratedNever();
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Employee)
+                .WithOne(e => e.User)
+                .HasForeignKey<User>(u => u.EmployeeId)
+                .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<TeamMember>()
                 .HasKey(tm => new { tm.EmployeeId, tm.ProjectId, tm.RoleId });
+            modelBuilder.Entity<Employee>()
+                .HasOne(u => u.Role)
+                .WithMany(e => e.Employees)
+                .HasForeignKey(e => e.RoleId)
+                .OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<TeamMember>()
                 .HasOne(tm => tm.Project)
                 .WithMany(p => p.TeamMembers)
                 .HasForeignKey(tm => tm.ProjectId)
+                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<TeamMember>()
+                .HasOne(t => t.Role)
+                .WithMany(r => r.TeamMembers)
+                .HasForeignKey(t => t.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<TeamMember>()
                 .HasOne(tm => tm.Employee)

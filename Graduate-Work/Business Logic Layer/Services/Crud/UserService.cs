@@ -13,9 +13,10 @@ namespace Business_Logic_Layer.Services.Crud
 {
     public class UserService : BaseCrudService<UserDTO>
     {
-
-        public UserService(ILogger<UserService> logger, IMapper mapper, ContextFactory contextFactory) : base(logger, mapper, contextFactory)
+        private readonly EmployeeService _employeeService;
+        public UserService(ILogger<UserService> logger, IMapper mapper, ContextFactory contextFactory, EmployeeService employeeService) : base(logger, mapper, contextFactory)
         {
+            _employeeService = employeeService;
         }
         public override OperationResult Create(UserDTO model)
         {
@@ -39,8 +40,17 @@ namespace Business_Logic_Layer.Services.Crud
                         Salt = Convert.ToBase64String(saltBytes),
                         Password = user.Password == null ? throw new ArgumentNullException(nameof(user.Password)) : ByteHelper.ComputeHash(ByteHelper.Concat(user.Password, saltBytes))
                     };
-                    var entity = _dbContext.Users.Add(newUser);
-                    return _dbContext.SaveChanges() > 0 ? _mapper.Map<UserDTO>(entity.Entity) : null;
+                    newUser.Employee = new Employee { RoleId = 0 };
+                    using var transaction = _dbContext.Database.BeginTransaction();
+                    _dbContext.Users.Add(newUser);
+                    var success = _dbContext.SaveChanges() > 0;
+
+                    if (success)
+                    {
+                        transaction.Commit();
+                        return _mapper.Map<UserDTO>(newUser);
+                    }
+                    transaction.Rollback();
                 }
                 return null;
             }

@@ -7,14 +7,23 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Business_Logic_Layer.Helpers;
+using Microsoft.Extensions.Configuration;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business_Logic_Layer.Services.Crud
 {
     public class ProjectService : BaseCrudService<ProjectDTO>
     {
-        public ProjectService(IMapper mapper, ILogger<ProjectService> logger, ContextFactory contextFactory) : base(logger, mapper, contextFactory)
+        private readonly IConfiguration _config;
+        private ServiceCache _cache;
+        private EmailService _emailService;
+        public ProjectService(IMapper mapper, ILogger<ProjectService> logger, ContextFactory contextFactory, ServiceCache cache, EmailService emailService, IConfiguration config) : base(logger, mapper, contextFactory)
         {
-
+            _config = config;
+            _cache = cache;
+            _emailService = emailService;
         }
 
         public OperationResult Create(int employeeId, ProjectDTO model)
@@ -25,19 +34,11 @@ namespace Business_Logic_Layer.Services.Crud
                 return new OperationResult { Error = new Error { Title = "Ошибка при создании проекта", Description = "Создатель не найден!" } };
             }
             var employeeDTO = _mapper.Map<EmployeeDTO>(employee);
-            if (employeeDTO.RoleId != (int)RoleEnum.ProjectManager)
+            if (employeeDTO.Role != RoleEnum.ProjectManager)
             {
                 return new OperationResult { Error = new Error { Title = "Ошибка при создании проекта", Description = "Пользователь не является проектным менеджером" } };
             }
-            if (model.Administrators == null)
-            {
-                model.Administrators = new List<EmployeeDTO> { employeeDTO };
-            }
-            else
-            {
-                model.Administrators.Add(employeeDTO);
-            }
-            var teamMember = new TeamMemberDTO { EmployeeId = employeeId, Employee = employeeDTO, Role = employee.RoleId.GetMemberByValue<RoleEnum>() };
+            var teamMember = new TeamMemberDTO { EmployeeId = employeeId, Role = employeeDTO.Role, IsAdmin = true };
             if (model.Team == null)
             {
                 model.Team = new List<TeamMemberDTO> { teamMember };
@@ -160,21 +161,43 @@ namespace Business_Logic_Layer.Services.Crud
             try
             {
                 IQueryable<Project> query = null;
-                if (filter.Like != default)
+                if (filter.EmployeeId.HasValue)
                 {
-                    query = query == null ? _readonlyDbContext.Projects : query.Where(p => p.Name.Contains(filter.Like));
+                    query = _readonlyDbContext.TeamMembers.Where(t => t.EmployeeId == filter.EmployeeId)
+                        .Select(t => t.Project).Include(p => p.TeamMembers);
                 }
-                if (filter.Filter == ProjectFilterEnum.Mine)
-                {
-                    query = query.Where(p => p.TeamMembers.Any(t => t.EmployeeId == filter.EmployeeId));
-                }
-                var projects = query.ToList();
+                //if (filter.Like != default)
+                //{
+                //    query = query == null ? _readonlyDbContext.Projects.Where(p => p.Name.Contains(filter.Like)) : query.Where(p => p.Name.Contains(filter.Like));
+                //}
+
+                var projects = query?.ToList();
                 return new OperationResult { Result = _mapper.Map<ICollection<ProjectDTO>>(projects) };
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Ошибка при чтении проектов для сотрудника id={0}", filter.EmployeeId);
                 return new OperationResult { Error = new Error { Description = "Неожиданная ошибка при получении всех проектов сотрудника" } };
+            }
+        }
+
+        public OperationResult ReadAllEmployees(int projectId)
+        {
+            try
+            {
+                var team = _readonlyDbContext.TeamMembers.Include(t => t.Employee).Where(t => t.ProjectId == projectId).ToArray();
+                var res = team.Select(t => new
+                {
+                    t.Employee.FullName,
+                    Role = t.RoleId.Value.GetDescriptionByValue<RoleEnum>(),
+                    t.IsAdmin
+                });
+                return new OperationResult { Result = res};
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Ошибка при чтении сотрудников проекта (id={0})", projectId);
+                return new OperationResult { Error = new Error { Description = "Неожиданная ошибка при получении сотрудников проекта" } };
             }
         }
 
@@ -204,48 +227,99 @@ namespace Business_Logic_Layer.Services.Crud
             }
             return result;
         }
+
+        public async Task<OperationResult> InviteUser(int projectId, int employeeId, string email)
+        {
+            try
+            {
+                var employee = _readonlyDbContext.Employees.Where(e => e.User.Login == email).FirstOrDefault();
+                if (employee == null)
+                {
+                    return new OperationResult { Error = new Error { Title = "Ошибка при приглашении сотрудника на проект", Description = "Пользователь не зарегистрирован!" } };
+                }
+                var projectName = _readonlyDbContext.Projects.Where(p => p.Id == projectId).Select(p => p.Name).FirstOrDefault();
+                if (projectName == null)
+                {
+                    return new OperationResult { Error = new Error { Title = "Ошибка при приглашении сотрудника на проект", Description = "Проекта уже не нет!" } };
+                }
+                var teamContainsEmployee = _readonlyDbContext.TeamMembers.Where(tm => tm.EmployeeId == employee.Id && tm.ProjectId == projectId).Count() > 0;
+                if (teamContainsEmployee)
+                {
+                    return new OperationResult { Error = new Error { Title = "Ошибка при приглашении сотрудника на проект", Description = "Сотрудник уже является членом команды проекта, в которую вы хотите его добавить!" } };
+                }
+                var teamMember = _readonlyDbContext.TeamMembers.Where(tm => tm.EmployeeId == employeeId && tm.ProjectId == projectId).FirstOrDefault();
+                if (teamMember == null)
+                {
+                    return new OperationResult { Error = new Error { Title = "Ошибка при приглашении сотрудника на проект", Description = "Вы не являетсь членом команды проекта, в которую вы хотите добавить сотрудника!" } };
+                }
+                if (teamMember.RoleId != (int)RoleEnum.ProjectManager)
+                {
+                    return new OperationResult { Error = new Error { Title = "Ошибка при приглашении сотрудника на проект", Description = "Вы не являетесь проектным менеджером!" } };
+                }
+                if (employee.RoleId == (int)RoleEnum.ProjectManager)
+                {
+                    return new OperationResult { Error = new Error { Title = "Ошибка при приглашении сотрудника на проект", Description = "Пользователь является проектным менеджером!" } };
+                }
+                var member = new TeamMember { EmployeeId = employee.Id, ProjectId = projectId, RoleId = employee.RoleId };
+                var key = KeysHelper.InviteKey(employee.Id, projectId);
+                _cache.SetForInvite(key, member);
+                var success = await _emailService.SendEmailAsync(email, "Приглашение на проект", GetHtml(projectId, employee.Id, projectName));
+                return new OperationResult { Result = new { Success = success } };
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Неожиданная ошибка при приглашении на проект(id={0}) сотрудником(id={1})", projectId, employeeId);
+                return new OperationResult { Error = new Error { Description = "Неожиданная ошибка при приглашении на проект сотрудника" } };
+            }
+        }
+
         /// <summary>
         /// Добавляет пользователя в проект
         /// </summary>
         /// <param name="employeeId">Добавляющий пользователя</param>
         /// <param name="model">Добавляемый пользователь</param>
         /// <returns></returns>
-        public OperationResult AddEmployee(int employeeId, TeamMemberDTO model)
+        public OperationResult AddEmployee(int projectId, int employeeId)
         {
             try
             {
-                var teamContainsEmployee = _dbContext.TeamMembers.Where(tm => tm.EmployeeId == model.EmployeeId && tm.ProjectId == model.ProjectId).Count() > 0;
+                var teamContainsEmployee = _dbContext.TeamMembers.Where(tm => tm.EmployeeId == employeeId && tm.ProjectId == projectId).Count() > 0;
                 if (teamContainsEmployee)
                 {
-                    return new OperationResult { Error = new Error { Title = "Ошибка при добавлении сотрудника в проект", Description = "Сотрудник уже является членом команды проекта, в которую вы хотите его добавить!" } };
+                    return new OperationResult { Error = new Error { Title = "Ошибка при добавлении проект", Description = "Вы уже являетесь членом команды проекта, в которую добавляетсь!" } };
                 }
-                var teamMember = _dbContext.TeamMembers.Where(tm => tm.EmployeeId == employeeId && tm.ProjectId == model.ProjectId).FirstOrDefault();
-                if (teamMember == null)
+                var key = KeysHelper.InviteKey(employeeId, projectId);
+                if (!_cache.TryGetValue(key, out TeamMember newTeamMember))
                 {
-                    return new OperationResult { Error = new Error { Title = "Ошибка при добавлении сотрудника в проект", Description = "Вы не являетсь членом команды проекта, в которую вы хотите добавить сотрудника!" } };
+                    _logger.LogError("Время приглашения истекло либо вовсе не было отослано! (id проекта = {0}, id сотрудника = {1})", projectId, employeeId);
+                    return new OperationResult { Error = new Error { Title = "Ошибка добавления на проект", Description = "Время приглашения истекло либо вовсе не было отослано!" } };
                 }
-                if (teamMember.Role.Id != (int)RoleEnum.ProjectManager)
-                {
-                    return new OperationResult { Error = new Error { Title = "Ошибка при добавлении сотрудника в проект", Description = "Вы не являетесь проектным менеджером!" } };
-                }
-                var newTeamMember = _mapper.Map<TeamMember>(model);
                 var entity = _dbContext.TeamMembers.Add(newTeamMember);
                 if (_dbContext.SaveChanges() > 0)
                 {
-                    _logger.LogInformation("Сотрудник(id=) успешно добавлен в проект(id=)", model.EmployeeId, model.ProjectId);
+                    _logger.LogInformation("Сотрудник(id={0}) успешно добавлен в проект(id={1})", employeeId, projectId);
                 }
                 else
                 {
-                    _logger.LogWarning("Не удалось добавить добавить в проект(id=)", model.EmployeeId, model.ProjectId);
+                    _logger.LogWarning("Не удалось добавить сотрудника (id={0}) в проект(id={1})", employeeId, projectId);
                     return new OperationResult { Result = new { Success = false } };
                 }
                 return new OperationResult { Result = _mapper.Map<TeamMemberDTO>(entity.Entity) };
             }
             catch(Exception e)
             {
-                _logger.LogError(e, "Неожиданная ошибка при добавлении на проект(id={0}) сотрудника(id={1})", model.ProjectId, model.EmployeeId);
+                _logger.LogError(e, "Неожиданная ошибка при добавлении на проект(id={0}) сотрудника(id={1})", projectId, employeeId);
                 return new OperationResult { Error = new Error { Description = "Неожиданная ошибка при добавлении на проект сотрудника" } };
             }
+        }
+
+        public string GetHtml(int projectId, int employeeId, string projectName)
+        {
+            var issuer = _config.GetSection("AuthOptions").GetValue<string>("Issuer");
+            return new StringBuilder()
+                .AppendLine("<h1>Здравствуй, Пользователь Task scheduler!</h1>")
+                .AppendFormat("<p><img src='https://img.icons8.com/plasticine/100/000000/task.png'/>Чтобы закончить регистрацию в проекте {0}, нажмите на ссылку ", projectName)
+                .AppendFormat("<a href='{0}api/project/{1}/employee/{2}'>Принять</a></p>", issuer, projectId, employeeId).ToString();
         }
     }
 }

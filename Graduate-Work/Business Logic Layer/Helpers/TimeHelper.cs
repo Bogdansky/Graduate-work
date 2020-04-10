@@ -14,6 +14,10 @@ namespace Business_Logic_Layer.Helpers
         /// <returns>Время = hh+mm+ss</returns>
         public static TimeSpan ParseTime(string time)
         {
+            if (time == null)
+            {
+                return default;
+            }
             var values = time.Split(":");
             var valid = values.All(v => int.TryParse(v, NumberStyles.Integer,CultureInfo.InvariantCulture, out int _));
             if (values.Length != 3 || !valid)

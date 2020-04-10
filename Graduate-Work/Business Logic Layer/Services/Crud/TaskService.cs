@@ -4,6 +4,7 @@ using Business_Logic_Layer.Models;
 using Business_Logic_Layer.Profiles;
 using Data_Access_Layer;
 using Data_Access_Layer.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -23,9 +24,21 @@ namespace Business_Logic_Layer.Services.Crud
         {
             try
             {
-                if (_dbContext.Tasks.Any(t => t.ProjectId == model.ProjectId && t.Title == model.Title))
+                if (model.TaskStatus == 0)
+                {
+                    model.TaskStatus = Enums.TaskStatusEnum.New;
+                }
+                if (_dbContext.TaskStatuses.Count(t => t.Id == (int)model.TaskStatus) == 0)
+                {
+                    _dbContext.TaskStatuses.Add(new TaskStatus { Id = (int)model.TaskStatus, Name = model.TaskStatus.GetDescription() });
+                    _dbContext.SaveChanges();
+                }
+
+                var exists = _dbContext.Tasks.Count(t => t.ProjectId == model.ProjectId && t.Title == model.Title) > 0;
+                if (!exists)
                 {
                     var task = _mapper.Map<Task>(model);
+                    task.UpdateDate = DateTime.Now;
                     var newEntity = _dbContext.Tasks.Add(task);
                     if (_dbContext.SaveChanges() == 0)
                     {
@@ -34,7 +47,7 @@ namespace Business_Logic_Layer.Services.Crud
                     else
                     {
                         _logger.LogInformation("Задание \"{0}\" успешно сохранено", model.Title);
-                        return new OperationResult { Result = new { Success = false } };
+                        return new OperationResult { Result = new { Success = true } };
                     }
                     return new OperationResult { Result = new { id = newEntity.Entity } };
                 }
@@ -134,12 +147,12 @@ namespace Business_Logic_Layer.Services.Crud
             {
                 var data = filter.TaskFilterType switch
                 {
-                    TaskFilterTypes.AllMine => _readonlyDbContext.Tasks.Where(t => t.EmployeeId == filter.EmployeeId),
-                    TaskFilterTypes.AllInProject => _readonlyDbContext.Tasks.Where(t => t.ProjectId == t.ProjectId),
+                    TaskFilterTypes.AllMine => _readonlyDbContext.Tasks.Include(t => t.Project).Where(t => t.EmployeeId == filter.EmployeeId),
+                    TaskFilterTypes.AllInProject => _readonlyDbContext.Tasks.Include(t => t.Employee).Where(t => t.ProjectId == filter.ProjectId),
                     TaskFilterTypes.MineInProject => _readonlyDbContext.Tasks.Where(t => t.EmployeeId == filter.EmployeeId && t.ProjectId == filter.ProjectId),
                     _ => null
                 };
-                result.Result = data;
+                result.Result = data.ToArray();
                 return result;
             }
             catch (Exception e)
@@ -153,6 +166,12 @@ namespace Business_Logic_Layer.Services.Crud
         {
             try
             {
+                if (_dbContext.TaskStatuses.Count(t => t.Id == (int)model.TaskStatus) == 0)
+                {
+                    _dbContext.TaskStatuses.Add(new TaskStatus { Id = (int)model.TaskStatus, Name = model.TaskStatus.GetDescription() });
+                    _dbContext.SaveChanges();
+                }
+
                 if (!_dbContext.Tasks.Any(t => t.Id == id))
                 {
                     return new OperationResult
@@ -165,6 +184,7 @@ namespace Business_Logic_Layer.Services.Crud
                     };
                 }
                 var task = _mapper.Map<Task>(model);
+                task.UpdateDate = DateTime.Now;
 
                 if (task.Id == default)
                 {
@@ -217,6 +237,7 @@ namespace Business_Logic_Layer.Services.Crud
                 if (errors.Count == 0)
                 {
                     task.EmployeeId = employeeId;
+                    task.UpdateDate = DateTime.Now;
                     _dbContext.Tasks.Update(task);
                     if (_dbContext.SaveChanges() > 0)
                     {

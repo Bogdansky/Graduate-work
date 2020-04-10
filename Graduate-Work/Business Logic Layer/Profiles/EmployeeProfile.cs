@@ -16,7 +16,8 @@ namespace Business_Logic_Layer.Profiles
                 .ForMember(ed => ed.FirstName, cfg => cfg.MapFrom(e => e.FullName.Split(' ', StringSplitOptions.None)[0]))
                 .ForMember(ed => ed.SecondName, cfg => cfg.MapFrom(e => e.FullName.Split(' ', StringSplitOptions.None)[1]))
                 .ForMember(ed => ed.Patronymic, cfg => cfg.MapFrom(e => e.FullName.Split(' ', StringSplitOptions.None)[2]))
-                .ForMember(ed => ed.Role, cfg => cfg.MapFrom(e => e.Role.Id.GetMemberByValue<RoleEnum>()));
+                .ForMember(ed => ed.Projects, cfg => cfg.MapFrom(e => e.TeamMembers))
+                .ForMember(ed => ed.Role, cfg => cfg.MapFrom(e => e.RoleId.GetMemberByValue<RoleEnum>()));
             CreateMap<EmployeeDTO, Employee>()
                 .ForMember(e => e.FullName, cfg => cfg.MapFrom(ed => string.Join(' ', ed.FirstName, ed.SecondName, ed.Patronymic)))
                 .ForMember(e => e.Role, cfg => cfg.Ignore());

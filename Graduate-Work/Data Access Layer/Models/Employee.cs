@@ -11,8 +11,8 @@ namespace Data_Access_Layer.Models
         public Role Role { get; set; }
         public int RoleId { get; set; }
         public int? UserId { get; set; }
-        public virtual User User { get; set; }
-        public virtual ICollection<TeamMember> TeamMembers { get; set; }
-        public virtual ICollection<Task> Tasks { get; set; }
+        public User User { get; set; }
+        public ICollection<TeamMember> TeamMembers { get; set; }
+        public ICollection<Task> Tasks { get; set; }
     }
 }

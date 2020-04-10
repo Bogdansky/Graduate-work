@@ -46,7 +46,8 @@ namespace Business_Logic_Layer.Helpers
             {
                 return default;
             }
-            return (T)Enum.ToObject(type, value);
+            var val = (T)Enum.ToObject(type, value);
+            return val;
         }
 
         public static List<KeyValuePair<int, string>> GetEnumValues<T>()

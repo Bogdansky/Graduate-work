@@ -45,35 +45,15 @@ namespace Data_Access_Layer.Migrations
 
                     b.Property<string>("FullName");
 
-                    b.Property<int?>("OrganizationId");
-
-                    b.Property<int?>("ProjectId");
-
-                    b.Property<int?>("RoleId");
+                    b.Property<int>("RoleId");
 
                     b.Property<int?>("UserId");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrganizationId");
-
-                    b.HasIndex("ProjectId");
-
                     b.HasIndex("RoleId");
 
                     b.ToTable("Employees");
-                });
-
-            modelBuilder.Entity("Data_Access_Layer.Models.Organization", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<string>("Name");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Organizations");
                 });
 
             modelBuilder.Entity("Data_Access_Layer.Models.Project", b =>
@@ -85,19 +65,14 @@ namespace Data_Access_Layer.Migrations
 
                     b.Property<string>("Name");
 
-                    b.Property<int?>("OrganizationId");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("OrganizationId");
 
                     b.ToTable("Projects");
                 });
 
             modelBuilder.Entity("Data_Access_Layer.Models.Role", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                    b.Property<int>("Id");
 
                     b.Property<string>("Name");
 
@@ -125,9 +100,13 @@ namespace Data_Access_Layer.Migrations
 
                     b.Property<string>("Severity");
 
+                    b.Property<int>("TaskStatusId");
+
                     b.Property<int>("TaskTypeId");
 
                     b.Property<string>("Title");
+
+                    b.Property<DateTime>("UpdateDate");
 
                     b.HasKey("Id");
 
@@ -135,15 +114,28 @@ namespace Data_Access_Layer.Migrations
 
                     b.HasIndex("ProjectId");
 
+                    b.HasIndex("TaskStatusId");
+
                     b.HasIndex("TaskTypeId");
 
                     b.ToTable("Tasks");
                 });
 
-            modelBuilder.Entity("Data_Access_Layer.Models.TaskType", b =>
+            modelBuilder.Entity("Data_Access_Layer.Models.TaskStatus", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
+
+                    b.Property<string>("Name");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TaskStatus");
+                });
+
+            modelBuilder.Entity("Data_Access_Layer.Models.TaskType", b =>
+                {
+                    b.Property<int>("Id");
 
                     b.Property<string>("Name");
 
@@ -161,6 +153,9 @@ namespace Data_Access_Layer.Migrations
                     b.Property<int?>("RoleId");
 
                     b.Property<int>("Id");
+
+                    b.Property<short>("IsAdmin")
+                        .HasColumnType("BIT");
 
                     b.HasKey("EmployeeId", "ProjectId", "RoleId");
 
@@ -206,26 +201,10 @@ namespace Data_Access_Layer.Migrations
 
             modelBuilder.Entity("Data_Access_Layer.Models.Employee", b =>
                 {
-                    b.HasOne("Data_Access_Layer.Models.Organization", "Organization")
-                        .WithMany("Employees")
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("Data_Access_Layer.Models.Project")
-                        .WithMany("Administrators")
-                        .HasForeignKey("ProjectId");
-
                     b.HasOne("Data_Access_Layer.Models.Role", "Role")
-                        .WithMany()
-                        .HasForeignKey("RoleId");
-                });
-
-            modelBuilder.Entity("Data_Access_Layer.Models.Project", b =>
-                {
-                    b.HasOne("Data_Access_Layer.Models.Organization", "Organization")
-                        .WithMany("Projects")
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .WithMany("Employees")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Data_Access_Layer.Models.Task", b =>
@@ -240,8 +219,13 @@ namespace Data_Access_Layer.Migrations
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade);
 
+                    b.HasOne("Data_Access_Layer.Models.TaskStatus", "TaskStatus")
+                        .WithMany("Tasks")
+                        .HasForeignKey("TaskStatusId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("Data_Access_Layer.Models.TaskType", "TaskType")
-                        .WithMany()
+                        .WithMany("Tasks")
                         .HasForeignKey("TaskTypeId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
@@ -259,9 +243,9 @@ namespace Data_Access_Layer.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Data_Access_Layer.Models.Role", "Role")
-                        .WithMany()
+                        .WithMany("TeamMembers")
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Data_Access_Layer.Models.User", b =>

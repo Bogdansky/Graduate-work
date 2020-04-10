@@ -51,6 +51,17 @@ namespace Data_Access_Layer
         [Description("Баг")]
         Bug
     }
+    public enum TaskStatusEnum
+    {
+        [Description("Создан")]
+        New,
+        [Description("Активный")]
+        Active,
+        [Description("Готов к тестированию")]
+        ReadyForQA,
+        [Description("Закрыт")]
+        Closed
+    }
     public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<Context>
     {
         public Context CreateDbContext(string[] args)
@@ -65,6 +76,12 @@ namespace Data_Access_Layer
             var optionsBuilder = new DbContextOptionsBuilder<Context>();
             optionsBuilder.UseMySQL(connectionString);
             var context = new Context(optionsBuilder.Options);
+            context.TaskStatuses.AddRange(
+                new TaskStatus { Id = (int)TaskStatusEnum.New, Name = TaskStatusEnum.New.GetDescription()},
+                new TaskStatus { Id = (int)TaskStatusEnum.Active, Name = TaskStatusEnum.Active.GetDescription() },
+                new TaskStatus { Id = (int)TaskStatusEnum.ReadyForQA, Name = TaskStatusEnum.ReadyForQA.GetDescription() },
+                new TaskStatus { Id = (int)TaskStatusEnum.Closed, Name = TaskStatusEnum.Closed.GetDescription() }
+                );
             context.TaskTypes.AddRange(
                 new TaskType { Id = (int)TaskTypeEnum.Task, Name = TaskTypeEnum.Task.GetDescription() },
                 new TaskType { Id = (int)TaskTypeEnum.Bug, Name = TaskTypeEnum.Bug.GetDescription() }
@@ -72,6 +89,7 @@ namespace Data_Access_Layer
             context.Roles.AddRange(
                 new[]
                 {
+                    new Role { Id = (int)RoleEnum.None, Name = RoleEnum.None.GetDescription()},
                     new Role { Id = (int)RoleEnum.JuniorSoftwareEngineer, Name = RoleEnum.JuniorSoftwareEngineer.GetDescription() },
                     new Role {Id = (int)RoleEnum.MiddleSoftwareEngineer, Name = RoleEnum.MiddleSoftwareEngineer.GetDescription()},
                     new Role { Id = (int)RoleEnum.SeniorSoftwareEngineer, Name = RoleEnum.SeniorSoftwareEngineer.GetDescription() },

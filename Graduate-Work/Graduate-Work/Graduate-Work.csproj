@@ -17,5 +17,7 @@
     <ProjectReference Include="..\Business Logic Layer\Business Logic Layer.csproj" />
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
+
 
 </Project>

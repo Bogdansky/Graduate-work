@@ -8,6 +8,8 @@ namespace Data_Access_Layer.Models
     [Table("TeamMembers")]
     public class TeamMember : BaseModel
     {
+        [Column(TypeName = "BIT")]
+        public bool IsAdmin { get; set; }
         public Employee Employee { get; set; }
         public int? EmployeeId { get; set; }
         public Project Project { get; set; }

@@ -13,6 +13,7 @@ namespace Business_Logic_Layer.Services
     {
         private static readonly string mailbox;
         private static readonly string password;
+        static object locker = new object(); 
 
         static EmailService()
         {
@@ -24,7 +25,20 @@ namespace Business_Logic_Layer.Services
             password = config.GetValue<string>("password");
         }
 
-        public async Task SendEmailAsync(string email, string subject, string message, string receiver = "")
+        public async Task<bool> SendEmailAsync(string email, string subject, string message, string receiver = "")
+        {
+            try
+            {
+                await Task.Factory.StartNew(() => SendEmail(email, subject, message, receiver));
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public void SendEmail(string email, string subject, string message, string receiver = "")
         {
             var emailMessage = new MimeMessage();
 
@@ -36,13 +50,13 @@ namespace Business_Logic_Layer.Services
                 Text = message
             };
 
-            using (var client = new SmtpClient())
+            lock(locker)
             {
-                await client.ConnectAsync("smtp.mail.ru", 25, false);
-                await client.AuthenticateAsync(mailbox, password);
-                await client.SendAsync(emailMessage);
-
-                await client.DisconnectAsync(true);
+                using var client = new SmtpClient();
+                client.Connect("smtp.mail.ru", 25, false);
+                client.Authenticate(mailbox, password);
+                client.Send(emailMessage);
+                client.Disconnect(true);
             }
         }
     }

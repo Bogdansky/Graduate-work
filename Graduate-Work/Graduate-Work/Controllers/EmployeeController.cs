@@ -28,13 +28,13 @@ namespace Graduate_Work.Controllers
         [HttpGet("{id}")]
         public IActionResult Read(int? id)
         {
-            return id.HasValue ? (IActionResult)Ok(_employeeService.Read(id.Value)) : BadRequest();
+            return id.HasValue ? (IActionResult)Ok(_employeeService.ReadByUserId(id.Value)) : BadRequest();
         }
 
-        [HttpGet("roles")]
-        public IActionResult ReadRoles()
+        [HttpGet("enums")]
+        public IActionResult ReadEnums()
         {
-            return Ok(_employeeService.GetRoles());
+            return Ok(_employeeService.GetEnums());
         }
 
         [HttpPost]
@@ -53,6 +53,12 @@ namespace Graduate_Work.Controllers
         public IActionResult Delete(int? id)
         {
             return id.HasValue ? (IActionResult)Ok(_employeeService.Delete(id.Value)) : BadRequest(); ;
+        }
+
+        [HttpGet("{id}/projects")]
+        public IActionResult GetEmployeeProjects(int id)
+        {
+            return id != 0 ? Ok(_employeeService.ReadProjects(id)) : (IActionResult)BadRequest();
         }
     }
 }

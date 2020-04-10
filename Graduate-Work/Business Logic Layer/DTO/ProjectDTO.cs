@@ -10,6 +10,5 @@ namespace Business_Logic_Layer.DTO
         public string Description { get; set; }
         public ICollection<TeamMemberDTO> Team { get; set; }
         public ICollection<TaskDTO> Tasks { get; set; }
-        public ICollection<EmployeeDTO> Administrators { get; set; }
     }
 }
