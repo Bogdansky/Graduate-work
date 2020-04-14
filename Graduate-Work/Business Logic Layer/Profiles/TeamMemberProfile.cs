@@ -10,7 +10,8 @@ namespace Business_Logic_Layer.Profiles
         public TeamMemberProfile()
         {
             CreateMap<TeamMember, TeamMemberDTO>().ForMember(t => t.Project, cfg => cfg.Ignore())
-                .ForMember(t => t.Role, cfg => cfg.MapFrom(tm => tm.RoleId.Value.GetMemberByValue<RoleEnum>()));
+                .ForMember(t => t.Role, cfg => cfg.MapFrom(tm => tm.RoleId.Value.GetMemberByValue<RoleEnum>()))
+                .ForMember(t => t.Project, cfg => cfg.Ignore());
             CreateMap<TeamMemberDTO, TeamMember>().ForMember(tm => tm.RoleId, cfg => cfg.MapFrom(t => (int)t.Role))
                 .ForMember(t => t.Role, cfg => cfg.Ignore());
         }

@@ -28,11 +28,6 @@ namespace Business_Logic_Layer.Services.Crud
                 {
                     model.TaskStatus = Enums.TaskStatusEnum.New;
                 }
-                if (_dbContext.TaskStatuses.Count(t => t.Id == (int)model.TaskStatus) == 0)
-                {
-                    _dbContext.TaskStatuses.Add(new TaskStatus { Id = (int)model.TaskStatus, Name = model.TaskStatus.GetDescription() });
-                    _dbContext.SaveChanges();
-                }
 
                 var exists = _dbContext.Tasks.Count(t => t.ProjectId == model.ProjectId && t.Title == model.Title) > 0;
                 if (!exists)
@@ -47,9 +42,9 @@ namespace Business_Logic_Layer.Services.Crud
                     else
                     {
                         _logger.LogInformation("Задание \"{0}\" успешно сохранено", model.Title);
-                        return new OperationResult { Result = new { Success = true } };
+                        return new OperationResult { Result = _mapper.Map<TaskDTO>(newEntity.Entity) };
                     }
-                    return new OperationResult { Result = new { id = newEntity.Entity } };
+                    return new OperationResult { Result = _mapper.Map<TaskDTO>(newEntity.Entity) };
                 }
                 return new OperationResult { Error = new Error { Title = "Ошибка задания", Description = "Задание с таким заголовком уже существует" } };
             }
@@ -145,10 +140,21 @@ namespace Business_Logic_Layer.Services.Crud
             OperationResult result = new OperationResult();
             try
             {
-                var data = filter.TaskFilterType switch
+                if (filter.ProjectId == 0)
                 {
-                    TaskFilterTypes.AllMine => _readonlyDbContext.Tasks.Include(t => t.Project).Where(t => t.EmployeeId == filter.EmployeeId),
-                    TaskFilterTypes.AllInProject => _readonlyDbContext.Tasks.Include(t => t.Employee).Where(t => t.ProjectId == filter.ProjectId),
+                    var ids = _readonlyDbContext.TeamMembers.Include(t => t.Project).Where(t => t.EmployeeId == filter.EmployeeId && t.ProjectId.HasValue).Select(t => t.ProjectId).ToArray();
+                    var projects = _readonlyDbContext.Projects.Include(p => p.TeamMembers).Include(p => p.Tasks)
+                        .Where(p => ids.Contains(p.Id)).ToArray();
+                    var teams = _readonlyDbContext.TeamMembers.Include(t => t.Employee).Where(t => ids.Contains(t.ProjectId)).Select(t => new { t.ProjectId, t.Employee }).GroupBy(t => t.ProjectId).Select(g => new { Id = g.Key, Team = g.Select(t => t.Employee) });
+                    result.Result = new { teams, projects = _mapper.Map<ProjectDTO[]>(projects) };
+                    return result;
+                }
+                IQueryable<Task> data;
+
+                data = filter.TaskFilterType switch
+                {
+                    TaskFilterTypes.AllMine => _readonlyDbContext.Tasks.Where(t => t.EmployeeId == filter.EmployeeId),
+                    TaskFilterTypes.AllInProject => _readonlyDbContext.Tasks.Where(t => t.ProjectId == filter.ProjectId),
                     TaskFilterTypes.MineInProject => _readonlyDbContext.Tasks.Where(t => t.EmployeeId == filter.EmployeeId && t.ProjectId == filter.ProjectId),
                     _ => null
                 };
@@ -166,13 +172,8 @@ namespace Business_Logic_Layer.Services.Crud
         {
             try
             {
-                if (_dbContext.TaskStatuses.Count(t => t.Id == (int)model.TaskStatus) == 0)
-                {
-                    _dbContext.TaskStatuses.Add(new TaskStatus { Id = (int)model.TaskStatus, Name = model.TaskStatus.GetDescription() });
-                    _dbContext.SaveChanges();
-                }
 
-                if (!_dbContext.Tasks.Any(t => t.Id == id))
+                if (_dbContext.Tasks.Count(t => t.Id == id) == 0)
                 {
                     return new OperationResult
                     {
@@ -192,7 +193,7 @@ namespace Business_Logic_Layer.Services.Crud
                 }
 
                 _dbContext.Tasks.Attach(task);
-                _dbContext.Entry(task).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+                _dbContext.Entry(task).State = EntityState.Modified;
                 if (_dbContext.SaveChanges() > 0)
                 {
                     _logger.LogInformation("Задание с id={0} было успешно обновлено", id);
@@ -200,7 +201,7 @@ namespace Business_Logic_Layer.Services.Crud
 
                 return new OperationResult
                 {
-                    Result = model
+                    Result = _mapper.Map<TaskDTO>(task)
                 };
             }
             catch (Exception e)

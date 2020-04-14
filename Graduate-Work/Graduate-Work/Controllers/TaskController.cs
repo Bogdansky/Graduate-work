@@ -40,8 +40,8 @@ namespace Graduate_Work.Controllers
             return id == 0 ? Ok(_taskService.Read(id)) : (IActionResult)BadRequest();
         }
 
-        [HttpGet("{employeeId}/filter")]
-        public IActionResult ReadAll(int employeeId, [FromQuery]TaskFilterTypes filter, [FromQuery]int? projectId)
+        [HttpGet("{employeeId}/filter/{filter}/project/{projectId}")]
+        public IActionResult ReadAll(int employeeId, TaskFilterTypes filter, int? projectId)
         {
             try
             {
@@ -52,6 +52,12 @@ namespace Graduate_Work.Controllers
             {
                 return BadRequest();
             }
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult Update(int? id, TaskDTO model)
+        {
+            return id.HasValue ? Ok(_taskService.Update(id.Value, model)) : (IActionResult)BadRequest();
         }
     }
 }

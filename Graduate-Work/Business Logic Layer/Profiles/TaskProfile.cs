@@ -12,7 +12,7 @@ namespace Business_Logic_Layer.Profiles
         {
             CreateMap<Task, TaskDTO>()
                 .ForMember(m => m.TaskType, cfg => cfg.MapFrom(o => o.TaskTypeId.GetMemberByValue<TaskTypeEnum>()))
-                .ForMember(m => m.TaskStatus, cfg => cfg.MapFrom(o => o.TaskStatusId.GetMemberByValue<TaskStatusEnum>())); ;
+                .ForMember(m => m.TaskStatus, cfg => cfg.MapFrom(o => o.TaskStatusId.GetMemberByValue<TaskStatusEnum>()));
             CreateMap<TaskDTO, Task>()
                 .ForMember(m => m.TaskTypeId, cfg => cfg.MapFrom(o => (int)o.TaskType))
                 .ForMember(m => m.TaskStatusId, cfg => cfg.MapFrom(o => (int)o.TaskStatus))
