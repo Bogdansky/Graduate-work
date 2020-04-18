@@ -21,7 +21,11 @@ jobs:
         dotnet-version: '3.0.103'
 
     - name: Build with dotnet
-      run: dotnet build --configuration Release
+      shell: bash
+      run: |
+        pushd ./Graduate-Work
+        dotnet build --configuration Release
+        popd
 
     - name: dotnet publish
       run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
