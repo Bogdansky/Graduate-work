@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Business_Logic_Layer.DTO;
+using Business_Logic_Layer.Models;
 using Business_Logic_Layer.Services.Crud;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,11 +19,6 @@ namespace Graduate_Work.Controllers
         public EmployeeController(EmployeeService employeeService)
         {
             _employeeService = employeeService;
-        }
-        [HttpGet]
-        public IActionResult Read()
-        {
-            return Ok(_employeeService.ReadAll());
         }
 
         [HttpGet("{id}")]
@@ -59,6 +55,26 @@ namespace Graduate_Work.Controllers
         public IActionResult GetEmployeeProjects(int id)
         {
             return id != 0 ? Ok(_employeeService.ReadProjects(id)) : (IActionResult)BadRequest();
+        }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchForEmployees([FromQuery]EmployeeFilter filter)
+        {
+            return Ok(await _employeeService.SearchAsync(filter));
+        }
+
+        [HttpGet("{id}/stats")]
+        public async Task<IActionResult> ReadTimeStatistics(int id)
+        { 
+            try
+            {
+                var stat = await _employeeService.GetTaskTimeStatisticsAsync(id);
+                return Ok(stat);
+            }
+            catch
+            {
+                return BadRequest();
+            }
         }
     }
 }

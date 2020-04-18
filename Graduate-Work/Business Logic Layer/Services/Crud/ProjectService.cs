@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Business_Logic_Layer.Enums;
 
 namespace Business_Logic_Layer.Services.Crud
 {
@@ -185,13 +186,18 @@ namespace Business_Logic_Layer.Services.Crud
         {
             try
             {
-                var team = _readonlyDbContext.TeamMembers.Include(t => t.Employee).Where(t => t.ProjectId == projectId).ToArray();
-                var res = team.Select(t => new
+                var team = _readonlyDbContext.TeamMembers.Include(t => t.Employee).ThenInclude(e => e.Tasks).Where(t => t.ProjectId == projectId).ToArray();
+                var tasks = team.Select(t => t.Employee).SelectMany(t => t.Tasks.Where(t => t.ProjectId == projectId)).ToArray();
+                var res = team.Select(m => new
                 {
-                    t.Employee.FullName,
-                    Role = t.RoleId.Value.GetDescriptionByValue<RoleEnum>(),
-                    t.IsAdmin
-                });
+                    m.Employee.FullName,
+                    Role = m.RoleId.Value.GetDescriptionByValue<RoleEnum>(),
+                    m.IsAdmin,
+                    ActiveTasksCount = tasks.Count(t => t.EmployeeId == m.EmployeeId && t.TaskStatusId == (int)TaskStatusEnum.Active),
+                    ClosedTasksCount = tasks.Count(t => t.EmployeeId == m.EmployeeId && t.TaskStatusId == (int)TaskStatusEnum.Closed),
+                    Rate = tasks.Any(t => t.EmployeeId == m.EmployeeId && t.TaskStatusId == (int)TaskStatusEnum.Closed) 
+                    ? tasks.Where(t => t.EmployeeId == m.EmployeeId && t.TaskStatusId == (int)TaskStatusEnum.Closed).Select(t => (t.Effort - t.Recent) <= t.Effort ? 100 : t.Effort / (double)(t.Effort - t.Recent) * 100).Average() : default
+                }).ToArray();
                 return new OperationResult { Result = res};
             }
             catch (Exception e)
@@ -228,21 +234,26 @@ namespace Business_Logic_Layer.Services.Crud
             return result;
         }
 
-        public async Task<OperationResult> InviteUser(int projectId, int employeeId, string email)
+        public async Task<OperationResult> InviteUser(int projectId, int employeeId, EmployeeDTO invitedEmployee)
         {
             try
             {
-                var employee = _readonlyDbContext.Employees.Where(e => e.User.Login == email).FirstOrDefault();
-                if (employee == null)
+                var user = _readonlyDbContext.Users.Include(u => u.Employee).Where(u => u.EmployeeId == invitedEmployee.Id).FirstOrDefault();
+                if (user == null)
                 {
                     return new OperationResult { Error = new Error { Title = "Ошибка при приглашении сотрудника на проект", Description = "Пользователь не зарегистрирован!" } };
+                }
+                var key = KeysHelper.InviteKey(invitedEmployee.Id, projectId);
+                if (_cache.TryGetValue(key, out TeamMember _))
+                {
+                    return new OperationResult { Error = new Error { Title = "Ошибка при приглашении сотрудника на проект", Description = "Приглашение уже отправлено" } };
                 }
                 var projectName = _readonlyDbContext.Projects.Where(p => p.Id == projectId).Select(p => p.Name).FirstOrDefault();
                 if (projectName == null)
                 {
-                    return new OperationResult { Error = new Error { Title = "Ошибка при приглашении сотрудника на проект", Description = "Проекта уже не нет!" } };
+                    return new OperationResult { Error = new Error { Title = "Ошибка при приглашении сотрудника на проект", Description = "Проекта уже нет!" } };
                 }
-                var teamContainsEmployee = _readonlyDbContext.TeamMembers.Where(tm => tm.EmployeeId == employee.Id && tm.ProjectId == projectId).Count() > 0;
+                var teamContainsEmployee = _readonlyDbContext.TeamMembers.Where(tm => tm.EmployeeId == invitedEmployee.Id && tm.ProjectId == projectId).Count() > 0;
                 if (teamContainsEmployee)
                 {
                     return new OperationResult { Error = new Error { Title = "Ошибка при приглашении сотрудника на проект", Description = "Сотрудник уже является членом команды проекта, в которую вы хотите его добавить!" } };
@@ -256,14 +267,17 @@ namespace Business_Logic_Layer.Services.Crud
                 {
                     return new OperationResult { Error = new Error { Title = "Ошибка при приглашении сотрудника на проект", Description = "Вы не являетесь проектным менеджером!" } };
                 }
-                if (employee.RoleId == (int)RoleEnum.ProjectManager)
+                if (user.Employee.RoleId == (int)RoleEnum.ProjectManager)
                 {
                     return new OperationResult { Error = new Error { Title = "Ошибка при приглашении сотрудника на проект", Description = "Пользователь является проектным менеджером!" } };
                 }
-                var member = new TeamMember { EmployeeId = employee.Id, ProjectId = projectId, RoleId = employee.RoleId };
-                var key = KeysHelper.InviteKey(employee.Id, projectId);
-                _cache.SetForInvite(key, member);
-                var success = await _emailService.SendEmailAsync(email, "Приглашение на проект", GetHtml(projectId, employee.Id, projectName));
+                var member = new TeamMember { EmployeeId = invitedEmployee.Id, ProjectId = projectId, RoleId = user.Employee.RoleId };
+                
+                var success = await _emailService.SendEmailAsync(user.Login, "Приглашение на проект", GetHtml(projectId, invitedEmployee.Id, projectName));   
+                if (success)
+                {
+                    _cache.SetForInvite(key, member);
+                }
                 return new OperationResult { Result = new { Success = success } };
             }
             catch (Exception e)

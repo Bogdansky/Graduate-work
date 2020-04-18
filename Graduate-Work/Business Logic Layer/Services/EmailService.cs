@@ -53,7 +53,8 @@ namespace Business_Logic_Layer.Services
             lock(locker)
             {
                 using var client = new SmtpClient();
-                client.Connect("smtp.mail.ru", 25, false);
+
+                client.Connect("smtp.mail.ru", 465, true);
                 client.Authenticate(mailbox, password);
                 client.Send(emailMessage);
                 client.Disconnect(true);

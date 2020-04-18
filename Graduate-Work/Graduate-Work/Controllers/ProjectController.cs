@@ -7,6 +7,7 @@ using Business_Logic_Layer.Models;
 using Business_Logic_Layer.Services.Crud;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace Graduate_Work.Controllers
 {
@@ -15,9 +16,11 @@ namespace Graduate_Work.Controllers
     public class ProjectController : ControllerBase
     {
         private readonly ProjectService _projectService;
-        public ProjectController(ProjectService projectService)
+        private readonly IConfiguration _config;
+        public ProjectController(ProjectService projectService, IConfiguration config)
         {
             _projectService = projectService;
+            _config = config;
         }
 
         [HttpPost("{id}")]
@@ -27,16 +30,18 @@ namespace Graduate_Work.Controllers
             return Ok(result);
         }
         [HttpPut("{projectId}/employee/{employeeId}")]
-        public async Task<IActionResult> InviteEmployee(int projectId, int employeeId, UserDTO model)
+        public async Task<IActionResult> InviteEmployee(int projectId, int employeeId, EmployeeDTO invitedEmployee)
         {
-            var res = await _projectService.InviteUser(projectId, employeeId, model.Login);
+            var res = await _projectService.InviteUser(projectId, employeeId, invitedEmployee);
             return Ok(res);
         }
 
         [HttpGet("{projectId}/employee/{employeeId}")]
         public IActionResult AddEmployee(int projectId, int employeeId)
-        {   
-            return Ok(_projectService.AddEmployee(projectId, employeeId));
+        {
+            var result = _projectService.AddEmployee(projectId, employeeId);
+            var audience = _config.GetSection("AuthOptions").GetValue<string>("Audience");
+            return Redirect(audience);
         }
 
         [HttpGet]

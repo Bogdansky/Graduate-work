@@ -9,7 +9,9 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
+using TTasks = System.Threading.Tasks;
 
 namespace Business_Logic_Layer.Services.Crud
 {
@@ -270,6 +272,131 @@ namespace Business_Logic_Layer.Services.Crud
             };
 
             return new OperationResult { Result = new { roles, taskTypes, taskStatuses } };
+        }
+
+        public OperationResult Search(EmployeeFilter filter)
+        {
+            try
+            {
+                var maxRate = filter.MaxRate;
+                var minRate = filter.MinRate;
+
+                #region filters
+                Expression<Func<Employee, bool>> roleFilter = e => e.RoleId == (int)filter.Role;
+
+                Expression<Func<Employee, bool>> rateFilter = e => e.Tasks.Any(t => t.TaskStatusId == (int)TaskStatusEnum.Closed)
+                        && minRate < e.Tasks.Where(t => t.TaskStatusId == (int)TaskStatusEnum.Closed).Select(t => (t.Effort - t.Recent) <= t.Effort ? 100 : t.Effort / (double)(t.Effort - t.Recent) * 100).Average()
+                        && maxRate > e.Tasks.Where(t => t.TaskStatusId == (int)TaskStatusEnum.Closed).Select(t => (t.Effort - t.Recent) <= t.Effort ? 100 : t.Effort / (double)(t.Effort - t.Recent) * 100).Average();
+
+                Expression<Func<Employee, bool>> projectsFilter = e => e.TeamMembers.Count() >= filter.MinProjectNumber && e.TeamMembers.Count() <= filter.MaxProjectNumber;
+                #endregion
+
+                if (filter.MaxRate < filter.MinRate)
+                {
+                    minRate = filter.MaxRate;
+                    maxRate = filter.MinRate;
+                }
+                var ids = _readonlyDbContext.TeamMembers.Where(t => t.ProjectId == filter.ProjectId).Select(t => t.EmployeeId).ToArray();
+                IQueryable<Employee> query = _readonlyDbContext.Employees.Where(e => e.RoleId != (int)RoleEnum.ProjectManager && !ids.Contains(e.Id));
+
+                if (filter.Role != RoleEnum.None)
+                    query = query.Where(roleFilter);
+
+                if (!(minRate == 0 && maxRate == 100))
+                    query = query.Where(rateFilter);
+
+                if (filter.MinProjectNumber != filter.MaxProjectNumber)
+                    query = query.Where(projectsFilter);
+
+                var result = query.Select(e => new
+                {
+                    Employee = e,
+                    Rate = e.Tasks.Count(t => t.TaskStatusId == (int)TaskStatusEnum.Closed) == 0 ? default : e.Tasks.Where(t => t.TaskStatusId == (int)TaskStatusEnum.Closed)
+                    .Select(t => (t.Effort - t.Recent) <= t.Effort ? 100 : t.Effort / (double)(t.Effort - t.Recent) * 100).Average(),
+                    ProjectNumber = e.TeamMembers.Count
+                }).ToArray();
+                return new OperationResult { Result = result };
+            }
+            catch(Exception e)
+            {
+                var message = "Неожиданная ошибка при поиске сотрудников";
+                _logger.LogError(e, message);
+                return new OperationResult { Error = new Error { Description = message} };
+            }
+        }
+
+        public TTasks.Task<OperationResult> SearchAsync(EmployeeFilter filter)
+        {
+            return TTasks.Task.Factory.StartNew(() => Search(filter));
+        }
+
+        public OperationResult GetTaskTimeStatistics(int id)
+        {
+            var result = new OperationResult();
+            var months = new []
+            {
+                new { Id = MonthEnum.January, Value = MonthEnum.January.GetDescription()},
+                new { Id = MonthEnum.February, Value = MonthEnum.February.GetDescription()},
+                new { Id = MonthEnum.March, Value = MonthEnum.March.GetDescription()},
+                new { Id = MonthEnum.April, Value = MonthEnum.April.GetDescription()},
+                new { Id = MonthEnum.May, Value = MonthEnum.May.GetDescription()},
+                new { Id = MonthEnum.June, Value = MonthEnum.June.GetDescription()},
+                new { Id = MonthEnum.July, Value = MonthEnum.July.GetDescription()},
+                new { Id = MonthEnum.August, Value = MonthEnum.August.GetDescription()},
+                new { Id = MonthEnum.September, Value = MonthEnum.September.GetDescription()},
+                new { Id = MonthEnum.October, Value = MonthEnum.October.GetDescription()},
+                new { Id = MonthEnum.November, Value = MonthEnum.November.GetDescription()},
+                new { Id = MonthEnum.December, Value = MonthEnum.December.GetDescription()}
+            };
+            try
+            {
+                var tasks = _readonlyDbContext.Tasks.Where(t => t.EmployeeId == id).ToList();
+                if (tasks.Count == 0)
+                {
+                    result.Result = new { Message = "У вас нет задач" };
+                    return result;
+                }
+                var groupedTasks = tasks.GroupBy(t => t.UpdateDate.Year).Select(t => 
+                {
+                    var key = t.Key;
+                    var values = t.GroupBy(i => i.UpdateDate.Month).Select(i =>
+                    {
+                        var key = i.Key;
+                        var tasks = i.Select(x => x).ToList();
+                        return new KeyValuePair<int, List<Task>>(key, tasks);
+                    });
+                    return new KeyValuePair<int, IEnumerable<KeyValuePair<int, List<Task>>>>(key, values);
+                }).ToList();
+                result.Result = new
+                {
+                    Total = tasks.Count,
+                    TotalTime = GetFormattedTime(new TimeSpan(tasks.Select(t => t.Effort - t.Recent).Sum() * TimeSpan.TicksPerMillisecond)),
+                    Closed = tasks.Count(t => t.TaskStatusId == (int)TaskStatusEnum.Closed),
+                    OverallRate = groupedTasks.SelectMany(t => t.Value.SelectMany(ty => ty.Value.Select(tm => (tm.Effort - tm.Recent) <= tm.Effort ? 100 : tm.Effort / (double)(tm.Effort - tm.Recent) * 100))).Average(),
+                    TasksByYear = groupedTasks.Select(t => new { Year = t.Key, Months = t.Value.Select(tm => new { Month = tm.Key, TaskCount = tm.Value.Count})})
+                };
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Неожиданная ошибка при получении статистики (id=" + id + ")");
+                result.Error = new Error { Description = "Неожиданная ошибка" };
+            }
+            return result;
+        }
+
+        public TTasks.Task<OperationResult> GetTaskTimeStatisticsAsync(int id)
+        {
+            return TTasks.Task.Factory.StartNew(() => GetTaskTimeStatistics(id));
+        }
+
+        public string GetFormattedTime(TimeSpan time)
+        {
+            var days = Math.Truncate(time.TotalDays) == 0 ? null : time.TotalDays == 1 ? $"{time.ToString("%d")} день" : time.TotalDays < 5 ? $"{time.ToString("%d")} дня" : $"{time.ToString("%d")} дней";
+            var hours = time.Hours == 0 ? null : time.Hours == 1 ? $"{time.ToString("%h")} час" : time.Hours < 5 ? $"{time.ToString("%h")} часа" : $"{time.ToString("%d")} часов";
+            var minutes = time.Minutes == 0 ? null : time.Minutes == 1 ? $"{time.ToString("%m")} минута" : time.Minutes < 5 ? $"{time.ToString("%m")} минуты" : $"{time.ToString("%m")} минут";
+            var seconds = time.Minutes == 0 ? null : time.Minutes == 1 ? $"{time.ToString("%s")} секунда" : time.Minutes < 5 ? $"{time.ToString("%s")} секунды" : $"{time.ToString("%s")} секунд";
+            var dates = new string[] { days, hours, minutes, seconds }.Where(d => d != null);
+            return string.Join(", ", dates);
         }
     }
 }
