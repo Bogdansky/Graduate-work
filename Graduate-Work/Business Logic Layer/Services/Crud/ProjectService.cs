@@ -91,6 +91,45 @@ namespace Business_Logic_Layer.Services.Crud
             return result;
         }
 
+        public override async Task<OperationResult> CreateAsync(ProjectDTO model)
+        {
+            OperationResult result = new OperationResult();
+            try
+            {
+                var existsById = await _readonlyDbContext.Projects.FindAsync(model.Id);
+                if (existsById != null)
+                {
+                    result.Error = new Error { Title = "Ошибка проекта", Description = "Такой проект уже есть!" };
+                    return result;
+                }
+                var existsByName = _readonlyDbContext.Projects.Where(p => p.Name == model.Name).Count() > 0;
+                if (existsByName)
+                {
+                    result.Error = new Error { Title = "Ошибка проекта", Description = "Проект с таким именем уже есть" };
+                    return result;
+                }
+                var project = _mapper.Map<Project>(model);
+                var entity = _dbContext.Projects.Add(project);
+                if (await _dbContext.SaveChangesAsync() > 0)
+                {
+                    _logger.LogInformation("Проект \"{0}\" успешно сохранён", model.Name);
+                }
+                else
+                {
+                    _logger.LogWarning("Не удалось сохранить проект \"{0}\"", model.Name);
+                    return new OperationResult { Result = new { Success = false } };
+                }
+                result.Result = _mapper.Map<ProjectDTO>(entity.Entity);
+            }
+            catch (Exception e)
+            {
+                var originMessage = "Неожиданная ошибка при создании проекта";
+                _logger.LogError(e, "{0} \"{1}\"", originMessage, model.Name ?? "<not set>");
+                result.Error = new Error { Description = originMessage };
+            }
+            return result;
+        }
+
         public override OperationResult Delete(int id)
         {
             OperationResult result = new OperationResult();
@@ -142,6 +181,21 @@ namespace Business_Logic_Layer.Services.Crud
                 return new OperationResult { Error = new Error { Description = originMessage } };
             }
         }
+        public async override Task<OperationResult> ReadAsync(int id)
+        {
+            try
+            {
+                var project = await _readonlyDbContext.Projects.FindAsync(id);
+                return project == null ? new OperationResult { Error = new Error { Title = "Ошибка при получении проекта", Description = "Такого проекта нет!" } } :
+                    new OperationResult { Result = _mapper.Map<ProjectDTO>(project) };
+            }
+            catch (Exception e)
+            {
+                var originMessage = "Неожиданная ошибка при получении проекта";
+                _logger.LogError(e, "{0} c id = {1}", originMessage, id);
+                return new OperationResult { Error = new Error { Description = originMessage } };
+            }
+        }
 
         public override OperationResult ReadAll()
         {
@@ -182,11 +236,11 @@ namespace Business_Logic_Layer.Services.Crud
             }
         }
 
-        public OperationResult ReadAllEmployees(int projectId)
+        public async Task<OperationResult> ReadAllEmployees(int projectId)
         {
             try
             {
-                var team = _readonlyDbContext.TeamMembers.Include(t => t.Employee).ThenInclude(e => e.Tasks).Where(t => t.ProjectId == projectId).ToArray();
+                var team = await _readonlyDbContext.TeamMembers.Include(t => t.Employee).ThenInclude(e => e.Tasks).Where(t => t.ProjectId == projectId).ToArrayAsync();
                 var tasks = team.Select(t => t.Employee).SelectMany(t => t.Tasks.Where(t => t.ProjectId == projectId)).ToArray();
                 var res = team.Select(m => new
                 {
@@ -195,8 +249,8 @@ namespace Business_Logic_Layer.Services.Crud
                     m.IsAdmin,
                     ActiveTasksCount = tasks.Count(t => t.EmployeeId == m.EmployeeId && t.TaskStatusId == (int)TaskStatusEnum.Active),
                     ClosedTasksCount = tasks.Count(t => t.EmployeeId == m.EmployeeId && t.TaskStatusId == (int)TaskStatusEnum.Closed),
-                    Rate = tasks.Any(t => t.EmployeeId == m.EmployeeId && t.TaskStatusId == (int)TaskStatusEnum.Closed) 
-                    ? tasks.Where(t => t.EmployeeId == m.EmployeeId && t.TaskStatusId == (int)TaskStatusEnum.Closed).Select(t => (t.Effort - t.Recent) <= t.Effort ? 100 : t.Effort / (double)(t.Effort - t.Recent) * 100).Average() : default
+                    Rate = tasks.Any(t => t.EmployeeId == m.EmployeeId) 
+                    ? tasks.Where(t => t.EmployeeId == m.EmployeeId).Select(t => (t.Effort - t.Recent) <= t.Effort ? 100 : t.Effort / (double)(t.Effort - t.Recent) * 100).Average() : default
                 }).ToArray();
                 return new OperationResult { Result = res};
             }

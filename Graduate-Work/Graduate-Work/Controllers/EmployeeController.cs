@@ -64,11 +64,11 @@ namespace Graduate_Work.Controllers
         }
 
         [HttpGet("{id}/stats")]
-        public async Task<IActionResult> ReadTimeStatistics(int id)
+        public async Task<IActionResult> ReadTimeStatistics(int id, DateTime? dateStart, DateTime? dateEnd)
         { 
             try
             {
-                var stat = await _employeeService.GetTaskTimeStatisticsAsync(id);
+                var stat = await _employeeService.GetTaskTimeStatisticsAsync(id, dateStart, dateEnd);
                 return Ok(stat);
             }
             catch

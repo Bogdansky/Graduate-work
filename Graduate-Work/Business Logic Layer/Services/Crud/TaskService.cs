@@ -256,5 +256,16 @@ namespace Business_Logic_Layer.Services.Crud
                 return result;
             }
         }
+
+        public async void UpdateTrackedAsync(int taskId, long recent)
+        {
+            var task = await _dbContext.Tasks.FindAsync(taskId);
+            if (task != null)
+            {
+                task.Recent = recent;
+                _dbContext.Entry(task).State = EntityState.Modified;
+                await _dbContext.SaveChangesAsync();
+            }
+        }
     }
 }

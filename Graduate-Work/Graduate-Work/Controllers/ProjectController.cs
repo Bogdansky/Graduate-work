@@ -26,36 +26,71 @@ namespace Graduate_Work.Controllers
         [HttpPost("{id}")]
         public IActionResult Create([FromRoute]int id, ProjectDTO model)
         {
-            var result = _projectService.Create(id, model);
-            return Ok(result);
+            try
+            {
+                var result = _projectService.Create(id, model);
+                return Ok(result);
+            }
+            catch (Exception)
+            {
+                return BadRequest();
+            }
         }
         [HttpPut("{projectId}/employee/{employeeId}")]
         public async Task<IActionResult> InviteEmployee(int projectId, int employeeId, EmployeeDTO invitedEmployee)
         {
-            var res = await _projectService.InviteUser(projectId, employeeId, invitedEmployee);
-            return Ok(res);
+            try
+            {
+                var res = await _projectService.InviteUser(projectId, employeeId, invitedEmployee);
+                return Ok(res);
+            }
+            catch (Exception)
+            {
+                return BadRequest();
+            }
         }
 
         [HttpGet("{projectId}/employee/{employeeId}")]
         public IActionResult AddEmployee(int projectId, int employeeId)
         {
-            var result = _projectService.AddEmployee(projectId, employeeId);
-            var audience = _config.GetSection("AuthOptions").GetValue<string>("Audience");
-            return Redirect(audience);
+            try
+            {
+                _ = _projectService.AddEmployee(projectId, employeeId);
+                var audience = _config.GetSection("AuthOptions").GetValue<string>("Audience");
+                return Redirect(audience);
+            }
+            catch (Exception)
+            {
+                return BadRequest();
+            }
         }
 
         [HttpGet]
         public IActionResult ReadAll([FromQuery]ProjectFilter filter)
         {
-            var res = _projectService.ReadAll(filter);
-            return Ok(res);
+            try
+            {
+                var res = _projectService.ReadAll(filter);
+                return Ok(res);
+            }
+            catch (Exception)
+            {
+                return BadRequest();
+            }
         }
 
         [HttpGet("{projectId}/employees")]
-        public IActionResult ReadAllEmployees(int projectId)
+        public async Task<IActionResult> ReadAllEmployees(int projectId)
         {
-            var res = _projectService.ReadAllEmployees(projectId);
-            return Ok(res);
+            try
+            {
+                var res = await _projectService.ReadAllEmployees(projectId);
+                return Ok(res);
+            }
+            catch (Exception)
+            {
+                return BadRequest();
+            }
         }
     }
 }

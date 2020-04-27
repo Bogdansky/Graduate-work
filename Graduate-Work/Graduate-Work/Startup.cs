@@ -20,6 +20,9 @@ using Business_Logic_Layer.Profiles;
 using Microsoft.AspNetCore.Diagnostics;
 using System.IO;
 using Graduate_Work.Hubs;
+using Graduate_Work.Models.Interfaces;
+using Graduate_Work.Models;
+using Graduate_Work.Helpers;
 
 namespace Graduate_Work
 {
@@ -55,6 +58,7 @@ namespace Graduate_Work
             services.AddScoped<ContextFactory>();
             services.AddSingleton<EmailService>();
             services.AddSingleton<ServiceCache>();
+            services.AddSingleton<IConnectionManager, ConnectionManager>();
             services.AddMemoryCache();
             services.AddLogging();
             
@@ -63,6 +67,14 @@ namespace Graduate_Work
                 options.Authority = identitySection.GetValue<string>("Issuer");
                 options.RequireHttpsMetadata = false;
                 options.Audience = identitySection.GetValue<string>("Audience");
+                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = options.Authority,
+                    ValidateAudience = true,
+                    ValidAudience = options.Audience,
+                    ValidateLifetime = true,
+                };
             });
 
             services.AddCors(c => c.AddPolicy(MyAllow, builder =>
@@ -110,6 +122,7 @@ namespace Graduate_Work
             {
                 endpoints.MapControllers();
                 endpoints.MapHub<ChatHub>("/chat");
+                endpoints.MapHub<TrackerHub>("/track");
             });
         }
     }

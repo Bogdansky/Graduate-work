@@ -330,7 +330,7 @@ namespace Business_Logic_Layer.Services.Crud
             return TTasks.Task.Factory.StartNew(() => Search(filter));
         }
 
-        public OperationResult GetTaskTimeStatistics(int id)
+        public async TTasks.Task<OperationResult> GetTaskTimeStatisticsAsync(int id, DateTime? dateStart, DateTime? dateEnd)
         {
             var result = new OperationResult();
             var months = new []
@@ -350,7 +350,8 @@ namespace Business_Logic_Layer.Services.Crud
             };
             try
             {
-                var tasks = _readonlyDbContext.Tasks.Where(t => t.EmployeeId == id).ToList();
+                var tasks = await _readonlyDbContext.Tasks.Where(t => t.EmployeeId == id && t.UpdateDate >= dateStart && t.UpdateDate <= dateEnd).ToListAsync();
+                var projectCount = await _readonlyDbContext.TeamMembers.Where(t => t.ProjectId.HasValue && t.EmployeeId == id).CountAsync();
                 if (tasks.Count == 0)
                 {
                     result.Result = new { Message = "У вас нет задач" };
@@ -369,11 +370,12 @@ namespace Business_Logic_Layer.Services.Crud
                 }).ToList();
                 result.Result = new
                 {
+                    ProjectNumber = projectCount,
                     Total = tasks.Count,
                     TotalTime = GetFormattedTime(new TimeSpan(tasks.Select(t => t.Effort - t.Recent).Sum() * TimeSpan.TicksPerMillisecond)),
                     Closed = tasks.Count(t => t.TaskStatusId == (int)TaskStatusEnum.Closed),
                     OverallRate = groupedTasks.SelectMany(t => t.Value.SelectMany(ty => ty.Value.Select(tm => (tm.Effort - tm.Recent) <= tm.Effort ? 100 : tm.Effort / (double)(tm.Effort - tm.Recent) * 100))).Average(),
-                    TasksByYear = groupedTasks.Select(t => new { Year = t.Key, Months = t.Value.Select(tm => new { Month = tm.Key, TaskCount = tm.Value.Count})})
+                    TasksByYear = groupedTasks.Select(t => new { Year = t.Key, Months = t.Value.Select(tm => new { Month = tm.Key.GetDescriptionByValue<MonthEnum>(), TaskCount = tm.Value.Where(t => t.TaskStatusId == (int)TaskStatusEnum.Closed).Count()})})
                 };
             }
             catch (Exception e)
@@ -384,15 +386,10 @@ namespace Business_Logic_Layer.Services.Crud
             return result;
         }
 
-        public TTasks.Task<OperationResult> GetTaskTimeStatisticsAsync(int id)
-        {
-            return TTasks.Task.Factory.StartNew(() => GetTaskTimeStatistics(id));
-        }
-
         public string GetFormattedTime(TimeSpan time)
         {
             var days = Math.Truncate(time.TotalDays) == 0 ? null : time.TotalDays == 1 ? $"{time.ToString("%d")} день" : time.TotalDays < 5 ? $"{time.ToString("%d")} дня" : $"{time.ToString("%d")} дней";
-            var hours = time.Hours == 0 ? null : time.Hours == 1 ? $"{time.ToString("%h")} час" : time.Hours < 5 ? $"{time.ToString("%h")} часа" : $"{time.ToString("%d")} часов";
+            var hours = time.Hours == 0 ? null : time.Hours == 1 ? $"{time.ToString("%h")} час" : time.Hours < 5 ? $"{time.ToString("%h")} часа" : $"{time.ToString("%h")} часов";
             var minutes = time.Minutes == 0 ? null : time.Minutes == 1 ? $"{time.ToString("%m")} минута" : time.Minutes < 5 ? $"{time.ToString("%m")} минуты" : $"{time.ToString("%m")} минут";
             var seconds = time.Minutes == 0 ? null : time.Minutes == 1 ? $"{time.ToString("%s")} секунда" : time.Minutes < 5 ? $"{time.ToString("%s")} секунды" : $"{time.ToString("%s")} секунд";
             var dates = new string[] { days, hours, minutes, seconds }.Where(d => d != null);
