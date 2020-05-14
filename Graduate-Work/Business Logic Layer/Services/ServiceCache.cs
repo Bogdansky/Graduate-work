@@ -28,6 +28,7 @@ namespace Business_Logic_Layer.Services
             var time = expirationTime == default ? commonlifeTime : expirationTime;
             return _memoryCache.Set(key, item, time);
         }
+
         public T SetForInvite<T>(string key, T inviteItem, TimeSpan expirationTime = default)
         {
             var time = expirationTime == default ? inviteLifeTime : expirationTime;
@@ -37,6 +38,11 @@ namespace Business_Logic_Layer.Services
         public bool TryGetValue<T>(string key, out T result)
         {
             return _memoryCache.TryGetValue(key, out result);
+        }
+
+        public void DeleteKey(string key)
+        {
+            _memoryCache.Remove(key);
         }
     }
 }

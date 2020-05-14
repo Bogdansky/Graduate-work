@@ -11,11 +11,11 @@ namespace Data_Access_Layer
         public DbSet<Role> Roles { get; set; }
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Task> Tasks { get; set; }
-        public DbSet<Comment> Comments { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<TeamMember> TeamMembers { get; set; }
         public DbSet<TaskType> TaskTypes { get; set; }
         public DbSet<TaskStatus> TaskStatuses { get; set; }
+        public DbSet<TrackingHistory> TrackingHistory { get; set; }
 
         public Context(DbContextOptionsBuilder builder) : base(builder.Options) { }
         public Context(DbContextOptions options) : base(options) { }
@@ -65,11 +65,10 @@ namespace Data_Access_Layer
                 .WithOne(t => t.Employee)
                 .HasForeignKey(t => t.EmployeeId)
                 .OnDelete(DeleteBehavior.Restrict);
-            modelBuilder.Entity<Comment>()
-                .HasOne(c => c.Task)
-                .WithMany(t => t.Comments)
-                .HasForeignKey(c => c.TaskId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<TrackingHistory>()
+                .HasOne(t => t.Task);
+            modelBuilder.Entity<TrackingHistory>()
+                .HasOne(t => t.Employee);
         }
     }
 }

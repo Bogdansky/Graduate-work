@@ -257,15 +257,25 @@ namespace Business_Logic_Layer.Services.Crud
             }
         }
 
-        public async void UpdateTrackedAsync(int taskId, long recent)
+        public async System.Threading.Tasks.Task<TaskDTO> UpdateTrackedAsync(int taskId, long recent)
         {
             var task = await _dbContext.Tasks.FindAsync(taskId);
             if (task != null)
             {
+                var trackedTime = Math.Abs(task.Recent - recent);
+                var history = new TrackingHistory 
+                { 
+                    EmployeeId = task.EmployeeId.Value, 
+                    TaskId = task.Id, 
+                    TrackedTime = trackedTime, 
+                    Date = DateTime.Now 
+                };
                 task.Recent = recent;
                 _dbContext.Entry(task).State = EntityState.Modified;
+                await _dbContext.TrackingHistory.AddAsync(history);
                 await _dbContext.SaveChangesAsync();
             }
+            return _mapper.Map<TaskDTO>(task);
         }
     }
 }

@@ -10,6 +10,7 @@ namespace Graduate_Work.Models.Interfaces
         bool AddConnection(string employeeId, string connectionId);
         bool RemoveConnection(string connectionId);
         string GetConnection(int employeeId);
+        int GetUser(string connectionId);
         IEnumerable<int> OnlineUsers { get; }
         public string[] GetAllConnections();
         public bool ClearConnections();

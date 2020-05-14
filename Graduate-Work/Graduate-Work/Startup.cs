@@ -22,7 +22,7 @@ using System.IO;
 using Graduate_Work.Hubs;
 using Graduate_Work.Models.Interfaces;
 using Graduate_Work.Models;
-using Graduate_Work.Helpers;
+using Microsoft.AspNetCore.Http.Connections;
 
 namespace Graduate_Work
 {
@@ -47,7 +47,10 @@ namespace Graduate_Work
             });
 
             services.AddControllers();
-            services.AddSignalR();
+            services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = true;
+            });
             services.AddAutoMapper(typeof(TaskProfile));
 
             services.AddScoped<AccountService>();
@@ -60,7 +63,10 @@ namespace Graduate_Work
             services.AddSingleton<ServiceCache>();
             services.AddSingleton<IConnectionManager, ConnectionManager>();
             services.AddMemoryCache();
-            services.AddLogging();
+            services.AddLogging(cfg =>
+            {
+                cfg.AddConsole();
+            });
             
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
@@ -79,7 +85,7 @@ namespace Graduate_Work
 
             services.AddCors(c => c.AddPolicy(MyAllow, builder =>
             {
-                builder.WithOrigins(identitySection.GetValue<string>("Audience")).AllowAnyMethod().AllowAnyHeader();
+                builder.WithOrigins(identitySection.GetValue<string>("Audience")).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
             }));
         }
 
@@ -122,7 +128,10 @@ namespace Graduate_Work
             {
                 endpoints.MapControllers();
                 endpoints.MapHub<ChatHub>("/chat");
-                endpoints.MapHub<TrackerHub>("/track");
+                endpoints.MapHub<TrackerHub>("/track", options =>
+                {
+                    options.Transports = HttpTransportType.WebSockets | HttpTransportType.LongPolling;
+                });
             });
         }
     }

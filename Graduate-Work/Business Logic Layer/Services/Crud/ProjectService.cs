@@ -244,6 +244,7 @@ namespace Business_Logic_Layer.Services.Crud
                 var tasks = team.Select(t => t.Employee).SelectMany(t => t.Tasks.Where(t => t.ProjectId == projectId)).ToArray();
                 var res = team.Select(m => new
                 {
+                    Id = m.EmployeeId,
                     m.Employee.FullName,
                     Role = m.RoleId.Value.GetDescriptionByValue<RoleEnum>(),
                     m.IsAdmin,

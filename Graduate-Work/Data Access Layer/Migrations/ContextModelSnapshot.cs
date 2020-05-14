@@ -130,7 +130,7 @@ namespace Data_Access_Layer.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TaskStatus");
+                    b.ToTable("TaskStatuses");
                 });
 
             modelBuilder.Entity("Data_Access_Layer.Models.TaskType", b =>
@@ -164,6 +164,28 @@ namespace Data_Access_Layer.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("TeamMembers");
+                });
+
+            modelBuilder.Entity("Data_Access_Layer.Models.TrackingHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<DateTime>("Date");
+
+                    b.Property<int>("EmployeeId");
+
+                    b.Property<int>("TaskId");
+
+                    b.Property<long>("TrackedTime");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("TaskId");
+
+                    b.ToTable("TrackingHistory");
                 });
 
             modelBuilder.Entity("Data_Access_Layer.Models.User", b =>
@@ -246,6 +268,19 @@ namespace Data_Access_Layer.Migrations
                         .WithMany("TeamMembers")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Data_Access_Layer.Models.TrackingHistory", b =>
+                {
+                    b.HasOne("Data_Access_Layer.Models.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Data_Access_Layer.Models.Task", "Task")
+                        .WithMany()
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Data_Access_Layer.Models.User", b =>

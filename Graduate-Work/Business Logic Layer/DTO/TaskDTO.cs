@@ -18,6 +18,5 @@ namespace Business_Logic_Layer.DTO
         public TaskStatusEnum TaskStatus { get; set; }
         public int? EmployeeId { get; set; }
         public int ProjectId { get; set; }
-        public ICollection<CommentDTO> Comments { get; set; }
     }
 }

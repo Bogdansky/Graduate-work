@@ -21,6 +21,5 @@ namespace Data_Access_Layer.Models
         public TaskType TaskType { get; set; }
         public Employee Employee { get; set; }
         public Project Project { get; set; }
-        public ICollection<Comment> Comments { get; set; }
     }
 }

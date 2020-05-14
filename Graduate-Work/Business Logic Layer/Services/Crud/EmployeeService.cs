@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Business_Logic_Layer.DTO;
 using Business_Logic_Layer.Enums;
 using Business_Logic_Layer.Helpers;
@@ -350,32 +351,32 @@ namespace Business_Logic_Layer.Services.Crud
             };
             try
             {
-                var tasks = await _readonlyDbContext.Tasks.Where(t => t.EmployeeId == id && t.UpdateDate >= dateStart && t.UpdateDate <= dateEnd).ToListAsync();
-                var projectCount = await _readonlyDbContext.TeamMembers.Where(t => t.ProjectId.HasValue && t.EmployeeId == id).CountAsync();
-                if (tasks.Count == 0)
+                var history = await _readonlyDbContext.TrackingHistory.Where(t => t.EmployeeId == id && t.Date >= dateStart && t.Date <= dateEnd)
+                    .ToListAsync(); //.ProjectTo<TrackingHistoryDTO>(_mapper.ConfigurationProvider)
+                var taskIds = history.Select(r => r.TaskId).Distinct();
+                var tasks = await _readonlyDbContext.Tasks.Where(t => taskIds.Contains(t.Id)).ToArrayAsync();
+                if (history.Count == 0)
                 {
-                    result.Result = new { Message = "У вас нет задач" };
+                    result.Result = new { Message = $"У вас нет задач за период с {dateStart:dd.MM.yyyy} по {dateEnd:dd.MM.yyyy}" };
                     return result;
                 }
-                var groupedTasks = tasks.GroupBy(t => t.UpdateDate.Year).Select(t => 
+                var groupedTasks = history.GroupBy(t => t.Date.Year).Select(t => 
                 {
                     var key = t.Key;
-                    var values = t.GroupBy(i => i.UpdateDate.Month).Select(i =>
+                    var values = t.GroupBy(i => i.Date.Month).Select(i =>
                     {
                         var key = i.Key;
-                        var tasks = i.Select(x => x).ToList();
-                        return new KeyValuePair<int, List<Task>>(key, tasks);
+                        var history = i.Select(x => x).ToList();
+                        return new KeyValuePair<int, List<TrackingHistory>>(key, history);
                     });
-                    return new KeyValuePair<int, IEnumerable<KeyValuePair<int, List<Task>>>>(key, values);
+                    return new KeyValuePair<int, IEnumerable<KeyValuePair<int, List<TrackingHistory>>>>(key, values);
                 }).ToList();
                 result.Result = new
                 {
-                    ProjectNumber = projectCount,
-                    Total = tasks.Count,
-                    TotalTime = GetFormattedTime(new TimeSpan(tasks.Select(t => t.Effort - t.Recent).Sum() * TimeSpan.TicksPerMillisecond)),
-                    Closed = tasks.Count(t => t.TaskStatusId == (int)TaskStatusEnum.Closed),
-                    OverallRate = groupedTasks.SelectMany(t => t.Value.SelectMany(ty => ty.Value.Select(tm => (tm.Effort - tm.Recent) <= tm.Effort ? 100 : tm.Effort / (double)(tm.Effort - tm.Recent) * 100))).Average(),
-                    TasksByYear = groupedTasks.Select(t => new { Year = t.Key, Months = t.Value.Select(tm => new { Month = tm.Key.GetDescriptionByValue<MonthEnum>(), TaskCount = tm.Value.Where(t => t.TaskStatusId == (int)TaskStatusEnum.Closed).Count()})})
+                    Total = history.GroupBy(t => t.TaskId).Count(),
+                    TotalTime = GetFormattedTime(new TimeSpan(history.Sum(t => t.TrackedTime) * TimeSpan.TicksPerMillisecond)),
+                    OverallRate = tasks.Select(t => (t.Effort - t.Recent) <= t.Effort ? 100 : t.Effort / (double)(t.Effort - t.Recent) * 100).Average().ToString("#.##"),
+                    historyByYears = groupedTasks.Select(t => new { Year = t.Key, Months = t.Value.Select(tm => new { Month = tm.Key.GetDescriptionByValue<MonthEnum>(), Value = Math.Round(new TimeSpan(tm.Value.Sum(rm => rm.TrackedTime) * TimeSpan.TicksPerMillisecond).TotalHours, 2) })})
                 };
             }
             catch (Exception e)
@@ -388,10 +389,10 @@ namespace Business_Logic_Layer.Services.Crud
 
         public string GetFormattedTime(TimeSpan time)
         {
-            var days = Math.Truncate(time.TotalDays) == 0 ? null : time.TotalDays == 1 ? $"{time.ToString("%d")} день" : time.TotalDays < 5 ? $"{time.ToString("%d")} дня" : $"{time.ToString("%d")} дней";
-            var hours = time.Hours == 0 ? null : time.Hours == 1 ? $"{time.ToString("%h")} час" : time.Hours < 5 ? $"{time.ToString("%h")} часа" : $"{time.ToString("%h")} часов";
-            var minutes = time.Minutes == 0 ? null : time.Minutes == 1 ? $"{time.ToString("%m")} минута" : time.Minutes < 5 ? $"{time.ToString("%m")} минуты" : $"{time.ToString("%m")} минут";
-            var seconds = time.Minutes == 0 ? null : time.Minutes == 1 ? $"{time.ToString("%s")} секунда" : time.Minutes < 5 ? $"{time.ToString("%s")} секунды" : $"{time.ToString("%s")} секунд";
+            var days = Math.Truncate(time.TotalDays) == 0 ? null : time.TotalDays == 1 ? $"{time:%d} день" : time.TotalDays < 5 ? $"{time:%d} дня" : $"{time:%d} дней";
+            var hours = time.Hours == 0 ? null : time.Hours == 1 ? $"{time:%h} час" : time.Hours < 5 ? $"{time:%h} часа" : $"{time:%h} часов";
+            var minutes = time.Minutes == 0 ? null : time.Minutes == 1 ? $"{time:%m} минута" : time.Minutes < 5 ? $"{time:%m} минуты" : $"{time:%m} минут";
+            var seconds = time.Seconds == 0 ? null : time.Seconds == 1 ? $"{time:%s} секунда" : time.Seconds < 5 ? $"{time:%s} секунды" : $"{time:%s} секунд";
             var dates = new string[] { days, hours, minutes, seconds }.Where(d => d != null);
             return string.Join(", ", dates);
         }

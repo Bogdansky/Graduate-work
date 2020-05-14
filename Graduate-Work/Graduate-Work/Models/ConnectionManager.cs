@@ -56,6 +56,22 @@ namespace Graduate_Work.Models
             }
         }
 
+        public int GetUser(string connectionId)
+        {
+            lock(userMap)
+            {
+                try
+                {
+                    userMap.TryGetValue(connectionId, out int employeeId);
+                    return employeeId;
+                }
+                catch
+                {
+                    return default;
+                }
+            }
+        }
+
         public string[] GetAllConnections()
         {
             lock (userMap)

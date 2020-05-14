@@ -76,35 +76,35 @@ namespace Data_Access_Layer
             var optionsBuilder = new DbContextOptionsBuilder<Context>();
             optionsBuilder.UseMySQL(connectionString);
             var context = new Context(optionsBuilder.Options);
-            context.TaskStatuses.AddRange(
-                new TaskStatus { Id = (int)TaskStatusEnum.New, Name = TaskStatusEnum.New.GetDescription()},
-                new TaskStatus { Id = (int)TaskStatusEnum.Active, Name = TaskStatusEnum.Active.GetDescription() },
-                new TaskStatus { Id = (int)TaskStatusEnum.ReadyForQA, Name = TaskStatusEnum.ReadyForQA.GetDescription() },
-                new TaskStatus { Id = (int)TaskStatusEnum.Closed, Name = TaskStatusEnum.Closed.GetDescription() }
-                );
-            context.TaskTypes.AddRange(
-                new TaskType { Id = (int)TaskTypeEnum.Task, Name = TaskTypeEnum.Task.GetDescription() },
-                new TaskType { Id = (int)TaskTypeEnum.Bug, Name = TaskTypeEnum.Bug.GetDescription() }
-                );
-            context.Roles.AddRange(
-                new[]
-                {
-                    new Role { Id = (int)RoleEnum.None, Name = RoleEnum.None.GetDescription()},
-                    new Role { Id = (int)RoleEnum.JuniorSoftwareEngineer, Name = RoleEnum.JuniorSoftwareEngineer.GetDescription() },
-                    new Role {Id = (int)RoleEnum.MiddleSoftwareEngineer, Name = RoleEnum.MiddleSoftwareEngineer.GetDescription()},
-                    new Role { Id = (int)RoleEnum.SeniorSoftwareEngineer, Name = RoleEnum.SeniorSoftwareEngineer.GetDescription() },
-                    new Role {Id = (int)RoleEnum.TeamLeadSoftwareEngineer, Name = RoleEnum.TeamLeadSoftwareEngineer.GetDescription()},
-                    new Role { Id = (int)RoleEnum.QAEngineer, Name = RoleEnum.QAEngineer.GetDescription() },
-                    new Role {Id = (int)RoleEnum.QATeamLeader, Name = RoleEnum.QATeamLeader.GetDescription()},
-                    new Role { Id = (int)RoleEnum.BusinessAnalyst, Name = RoleEnum.BusinessAnalyst.GetDescription() },
-                    new Role {Id = (int)RoleEnum.GUIDesigner, Name = RoleEnum.GUIDesigner.GetDescription()},
-                    new Role {Id = (int)RoleEnum.DataScientist, Name = RoleEnum.DataScientist.GetDescription()},
-                    new Role {Id = (int)RoleEnum.QAAutomationEngineer, Name = RoleEnum.QAAutomationEngineer.GetDescription()},
-                    new Role {Id = (int)RoleEnum.ProjectManager, Name = RoleEnum.ProjectManager.GetDescription()},
-                    new Role {Id = (int)RoleEnum.DataEngineer, Name = RoleEnum.DataEngineer.GetDescription()},
-                    new Role {Id = (int)RoleEnum.DataAnalyst, Name = RoleEnum.DataAnalyst.GetDescription()}
-                }
-            );
+            //context.TaskStatuses.AddRange(
+            //    new TaskStatus { Id = (int)TaskStatusEnum.New, Name = TaskStatusEnum.New.GetDescription()},
+            //    new TaskStatus { Id = (int)TaskStatusEnum.Active, Name = TaskStatusEnum.Active.GetDescription() },
+            //    new TaskStatus { Id = (int)TaskStatusEnum.ReadyForQA, Name = TaskStatusEnum.ReadyForQA.GetDescription() },
+            //    new TaskStatus { Id = (int)TaskStatusEnum.Closed, Name = TaskStatusEnum.Closed.GetDescription() }
+            //    );
+            //context.TaskTypes.AddRange(
+            //    new TaskType { Id = (int)TaskTypeEnum.Task, Name = TaskTypeEnum.Task.GetDescription() },
+            //    new TaskType { Id = (int)TaskTypeEnum.Bug, Name = TaskTypeEnum.Bug.GetDescription() }
+            //    );
+            //context.Roles.AddRange(
+            //    new[]
+            //    {
+            //        new Role { Id = (int)RoleEnum.None, Name = RoleEnum.None.GetDescription()},
+            //        new Role { Id = (int)RoleEnum.JuniorSoftwareEngineer, Name = RoleEnum.JuniorSoftwareEngineer.GetDescription() },
+            //        new Role {Id = (int)RoleEnum.MiddleSoftwareEngineer, Name = RoleEnum.MiddleSoftwareEngineer.GetDescription()},
+            //        new Role { Id = (int)RoleEnum.SeniorSoftwareEngineer, Name = RoleEnum.SeniorSoftwareEngineer.GetDescription() },
+            //        new Role {Id = (int)RoleEnum.TeamLeadSoftwareEngineer, Name = RoleEnum.TeamLeadSoftwareEngineer.GetDescription()},
+            //        new Role { Id = (int)RoleEnum.QAEngineer, Name = RoleEnum.QAEngineer.GetDescription() },
+            //        new Role {Id = (int)RoleEnum.QATeamLeader, Name = RoleEnum.QATeamLeader.GetDescription()},
+            //        new Role { Id = (int)RoleEnum.BusinessAnalyst, Name = RoleEnum.BusinessAnalyst.GetDescription() },
+            //        new Role {Id = (int)RoleEnum.GUIDesigner, Name = RoleEnum.GUIDesigner.GetDescription()},
+            //        new Role {Id = (int)RoleEnum.DataScientist, Name = RoleEnum.DataScientist.GetDescription()},
+            //        new Role {Id = (int)RoleEnum.QAAutomationEngineer, Name = RoleEnum.QAAutomationEngineer.GetDescription()},
+            //        new Role {Id = (int)RoleEnum.ProjectManager, Name = RoleEnum.ProjectManager.GetDescription()},
+            //        new Role {Id = (int)RoleEnum.DataEngineer, Name = RoleEnum.DataEngineer.GetDescription()},
+            //        new Role {Id = (int)RoleEnum.DataAnalyst, Name = RoleEnum.DataAnalyst.GetDescription()}
+            //    }
+            //);
             context.SaveChanges();
             return context;
         }
