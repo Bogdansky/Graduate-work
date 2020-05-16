@@ -8,7 +8,7 @@ using Business_Logic_Layer.Services.Crud;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Graduate_Work.Controllers
+namespace Transport_Layer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

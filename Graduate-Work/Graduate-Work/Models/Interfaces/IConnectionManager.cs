@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Graduate_Work.Models.Interfaces
+namespace Transport_Layer.Models.Interfaces
 {
     public interface IConnectionManager
     {

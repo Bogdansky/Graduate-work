@@ -17,7 +17,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "Graduate_Work": {
+    "Transport_Layer": {
       "commandName": "Project",
       "launchBrowser": true,
       "launchUrl": "weatherforecast",

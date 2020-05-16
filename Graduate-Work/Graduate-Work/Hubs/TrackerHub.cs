@@ -4,7 +4,7 @@ using Business_Logic_Layer.Helpers;
 using Business_Logic_Layer.Models;
 using Business_Logic_Layer.Services;
 using Business_Logic_Layer.Services.Crud;
-using Graduate_Work.Models.Interfaces;
+using Transport_Layer.Models.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using System;
@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Graduate_Work.Hubs
+namespace Transport_Layer.Hubs
 {
     public class TrackerHub : Hub
     {

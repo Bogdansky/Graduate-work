@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29728.190
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Graduate-Work", "Graduate-Work\Graduate-Work.csproj", "{7BD66EF3-05C0-42FC-8382-F6020DF52252}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Transport Layer", "Graduate-Work\Transport Layer.csproj", "{7BD66EF3-05C0-42FC-8382-F6020DF52252}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data Access Layer", "Data Access Layer\Data Access Layer.csproj", "{B9391EB9-F544-40D5-B782-EA4F58AF156B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data Access Layer", "Data Access Layer\Data Access Layer.csproj", "{B9391EB9-F544-40D5-B782-EA4F58AF156B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Business Logic Layer", "Business Logic Layer\Business Logic Layer.csproj", "{F29B8B06-D410-42F5-A45E-DE87250AE241}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Business Logic Layer", "Business Logic Layer\Business Logic Layer.csproj", "{F29B8B06-D410-42F5-A45E-DE87250AE241}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

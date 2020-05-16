@@ -19,12 +19,12 @@ using Business_Logic_Layer.Services.Crud;
 using Business_Logic_Layer.Profiles;
 using Microsoft.AspNetCore.Diagnostics;
 using System.IO;
-using Graduate_Work.Hubs;
-using Graduate_Work.Models.Interfaces;
-using Graduate_Work.Models;
+using Transport_Layer.Hubs;
+using Transport_Layer.Models.Interfaces;
+using Transport_Layer.Models;
 using Microsoft.AspNetCore.Http.Connections;
 
-namespace Graduate_Work
+namespace Transport_Layer
 {
     public class Startup
     {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Graduate_Work.Hubs
+namespace Transport_Layer.Hubs
 {
     public class ChatHub : Hub
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Graduate_Work.Models.Enums
+namespace Transport_Layer.Models.Enums
 {
     public enum StatusCodeEnum
     {

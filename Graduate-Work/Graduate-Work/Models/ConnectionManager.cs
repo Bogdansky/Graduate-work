@@ -1,11 +1,11 @@
 ﻿using Business_Logic_Layer.Helpers;
-using Graduate_Work.Models.Interfaces;
+using Transport_Layer.Models.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Graduate_Work.Models
+namespace Transport_Layer.Models
 {
     public class ConnectionManager : IConnectionManager
     {
